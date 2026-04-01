@@ -144,23 +144,40 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <!-- Audio Player -->
+        <?php
+        $hasAudioFile = !empty($q['audio_path']) && $q['audio_path'] !== 'audio/listening/placeholder.mp3';
+        $audioSrc = $hasAudioFile ? APP_URL . '/uploads/' . sanitize($q['audio_path']) : '';
+        ?>
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 text-center">
             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
                 <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg>
             </div>
+            <?php if ($hasAudioFile): ?>
             <audio id="audioPlayer" class="hidden" preload="auto">
-                <source src="<?= APP_URL ?>/uploads/<?= sanitize($q['audio_path']) ?>" type="audio/mpeg">
+                <source src="<?= $audioSrc ?>" type="audio/mpeg">
             </audio>
+            <?php endif; ?>
             <div class="flex items-center justify-center gap-3">
-                <button onclick="playAudio()" id="playBtn" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-blue-600/20">
+                <button onclick="playListeningAudio()" id="playBtn"
+                    data-audio-url="<?= $audioSrc ?>"
+                    data-tts-text="<?= htmlspecialchars($q['question_text'], ENT_QUOTES, 'UTF-8') ?>"
+                    data-has-file="<?= $hasAudioFile ? '1' : '0' ?>"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-blue-600/20">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                     <span id="playText">Play Audio</span>
                 </button>
-                <button onclick="replayAudio()" class="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition" title="Replay">
+                <button onclick="replayListeningAudio()" class="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition" title="Replay">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </button>
             </div>
+            <?php if (!$hasAudioFile): ?>
+            <p class="text-xs text-amber-500 mt-2 flex items-center justify-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Using AI voice (no uploaded audio)
+            </p>
+            <?php else: ?>
             <p class="text-xs text-blue-400 mt-2">Listen carefully, then answer below</p>
+            <?php endif; ?>
         </div>
 
         <!-- Question Text -->
@@ -309,16 +326,59 @@ require_once __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <script>
-const audio = document.getElementById('audioPlayer');
-function playAudio() {
-    if (audio) {
-        audio.play();
-        document.getElementById('playText').textContent = 'Playing...';
-        audio.onended = () => { document.getElementById('playText').textContent = 'Play Again'; };
+const audioEl = document.getElementById('audioPlayer');
+const playBtn = document.getElementById('playBtn');
+let listeningPlaying = false;
+
+function playListeningAudio() {
+    if (listeningPlaying) { stopListeningAudio(); return; }
+
+    const hasFile = playBtn?.dataset.hasFile === '1';
+    const ttsText = playBtn?.dataset.ttsText || '';
+
+    listeningPlaying = true;
+    document.getElementById('playText').textContent = 'Playing...';
+
+    if (hasFile && audioEl) {
+        audioEl.play();
+        audioEl.onended = () => { resetPlayState(); };
+        audioEl.onerror = () => {
+            // Fallback to TTS if audio file fails
+            if (ttsText) {
+                KoreanTTS.speak(ttsText, {
+                    type: 'browser_tts',
+                    button: playBtn,
+                    onEnd: resetPlayState,
+                    onError: resetPlayState
+                });
+            } else { resetPlayState(); }
+        };
+    } else if (ttsText) {
+        KoreanTTS.speak(ttsText, {
+            type: 'browser_tts',
+            onEnd: resetPlayState,
+            onError: resetPlayState
+        });
+    } else {
+        resetPlayState();
     }
 }
-function replayAudio() {
-    if (audio) { audio.currentTime = 0; audio.play(); }
+
+function replayListeningAudio() {
+    stopListeningAudio();
+    setTimeout(playListeningAudio, 100);
+}
+
+function stopListeningAudio() {
+    if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; }
+    KoreanTTS.stop();
+    resetPlayState();
+}
+
+function resetPlayState() {
+    listeningPlaying = false;
+    const txt = document.getElementById('playText');
+    if (txt) txt.textContent = 'Play Again';
 }
 </script>
 

@@ -2,6 +2,7 @@
 /**
  * Learner Layout Header
  */
+require_once __DIR__ . '/speaker-button.php';
 $currentUser = getCurrentUser();
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 $flash = getFlash();
@@ -16,6 +17,7 @@ $flash = getFlash();
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <?= ttsScriptBlock() ?>
     <style>
         body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
         .korean-text, .korean-large, .korean-xlarge { font-family: 'Noto Sans KR', sans-serif; }

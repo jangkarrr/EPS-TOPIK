@@ -17,6 +17,18 @@ A comprehensive web application for EPS-TOPIK (Employment Permit System - Test o
 - **Progress** — Charts, accuracy stats, mastery breakdown, achievements
 - **Profile & Settings** — Update profile, change password, study preferences
 
+### AI Voice (Korean TTS)
+- **Browser TTS** — Free Web Speech API with automatic Korean voice detection
+- **Premium-ready** — Architecture supports Google Cloud TTS and OpenAI TTS
+- **2-layer system** — Uploaded audio > Generated TTS > Browser fallback
+- **Vocabulary** — Hear word + hear example sentence + slow playback on all views
+- **Lessons** — Auto-attaches speaker icons to Korean text in lesson content
+- **Reading** — "Listen to passage" button for full passage narration
+- **Listening** — TTS fallback when no uploaded audio file exists
+- **Mock Exams** — TTS fallback for listening section questions
+- **Speed control** — 0.5x to 1.5x selectable playback speed
+- **Audio caching** — Generated premium audio is cached to avoid re-generation
+
 ### Admin Side
 - **Dashboard** — User stats, content counts, signup/quiz charts, recent activity
 - **User Management** — Search, filter, toggle status, delete users
@@ -28,6 +40,7 @@ A comprehensive web application for EPS-TOPIK (Employment Permit System - Test o
 - **Mock Exam Management** — Exam creation with listening/reading sections
 - **Category Management** — Shared categories across all modules
 - **Reports & Analytics** — User growth, score distribution, activity charts, top learners
+- **Voice / TTS Settings** — Provider selection, API keys, rate/pitch, cache management
 
 ## Tech Stack
 

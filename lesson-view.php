@@ -120,9 +120,30 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 
+    <!-- Voice Controls -->
+    <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg>
+                <span class="text-sm font-medium text-gray-700">AI Voice</span>
+                <span class="text-xs text-gray-400">Click speaker icons to hear pronunciation</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400">Speed:</span>
+                <div id="lesson-speed-selector" class="flex items-center gap-1"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Lesson Content -->
     <div class="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 mb-6">
-        <div class="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-li:text-gray-600">
+        <?php if ($lesson['summary']): ?>
+        <div class="mb-5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+            <p class="text-sm text-gray-600"><?= sanitize($lesson['summary']) ?></p>
+        </div>
+        <?php endif; ?>
+
+        <div id="lesson-content" class="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-li:text-gray-600">
             <?= $lesson['content'] ?>
         </div>
 
@@ -138,6 +159,35 @@ require_once __DIR__ . '/includes/header.php';
         </div>
         <?php endif; ?>
     </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        KoreanTTS.createSpeedSelector('lesson-speed-selector');
+
+        // Auto-attach speaker buttons to .vocab-item elements in lesson content
+        document.querySelectorAll('#lesson-content .vocab-item').forEach(item => {
+            const koreanEl = item.querySelector('.korean-large, .korean-xlarge, .korean-text');
+            if (!koreanEl) return;
+            const text = koreanEl.textContent.trim();
+            if (!text) return;
+
+            // Check if it contains Korean characters
+            if (!/[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/.test(text)) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tts-btn tts-idle inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 transition mt-1.5';
+            btn.title = 'Listen';
+            btn.dataset.ttsText = text;
+            btn.dataset.ttsModule = 'lesson';
+            btn.innerHTML = '<span class="tts-icon"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg></span>';
+            item.appendChild(btn);
+        });
+
+        // Re-bind after dynamic buttons are added
+        KoreanTTS.bindAll();
+    });
+    </script>
 
     <!-- Complete Button -->
     <?php if (!$isCompleted): ?>

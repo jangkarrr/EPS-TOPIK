@@ -171,7 +171,17 @@ require_once __DIR__ . '/includes/header.php';
             <div id="card-front">
                 <p class="korean-text text-4xl font-bold text-gray-900 mb-3" id="fc-korean"></p>
                 <p class="text-sm text-gray-400" id="fc-romanize"></p>
-                <p class="text-xs text-gray-300 mt-4">Click to reveal answer</p>
+                <div class="mt-4 flex items-center justify-center gap-2">
+                    <button type="button" id="fc-hear-btn" onclick="event.stopPropagation(); KoreanTTS.speak(vocabData[currentIndex]?.korean_word || '', {button: this, rate: KoreanTTS.config.defaultRate})" class="tts-btn tts-idle inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 transition">
+                        <span class="tts-icon"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg></span>
+                        <span class="tts-label" data-default-label="Hear">Hear</span>
+                    </button>
+                    <button type="button" onclick="event.stopPropagation(); KoreanTTS.speak(vocabData[currentIndex]?.korean_word || '', {rate: 0.6, button: this})" class="tts-btn tts-idle inline-flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium bg-amber-50 hover:bg-amber-100 text-amber-600 transition">
+                        <span class="tts-icon"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+                        <span class="tts-label" data-default-label="Slow">Slow</span>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-300 mt-3">Click card to reveal answer</p>
             </div>
             <div id="card-back" class="hidden">
                 <p class="korean-text text-3xl font-bold text-gray-900 mb-2" id="fc-korean-back"></p>
@@ -179,6 +189,10 @@ require_once __DIR__ . '/includes/header.php';
                 <p class="text-sm text-gray-500 mb-1" id="fc-pos"></p>
                 <p class="text-sm text-gray-400 italic mt-3" id="fc-example-kr"></p>
                 <p class="text-xs text-gray-400" id="fc-example-en"></p>
+                <button type="button" id="fc-hear-sentence" onclick="event.stopPropagation(); const s = vocabData[currentIndex]?.example_sentence_kr; if(s) KoreanTTS.speak(s, {button: this});" class="tts-btn tts-idle inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 transition mt-3">
+                    <span class="tts-icon"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg></span>
+                    <span class="tts-label" data-default-label="Hear sentence">Hear sentence</span>
+                </button>
             </div>
         </div>
         <div class="flex items-center justify-center gap-3 mt-6">
@@ -259,6 +273,7 @@ document.addEventListener('keydown', (e) => {
                 <tr class="hover:bg-gray-50/50 transition">
                     <td class="px-5 py-3.5">
                         <span class="korean-text text-base font-bold text-gray-900"><?= sanitize($v['korean_word']) ?></span>
+                        <?= speakerBtnInline($v['korean_word'], ['module' => 'vocabulary', 'itemId' => $v['id'], 'audioUrl' => $v['audio_path'] ? APP_URL . '/uploads/' . $v['audio_path'] : '']) ?>
                     </td>
                     <td class="px-5 py-3.5 text-gray-500"><?= sanitize($v['transliteration'] ?? '') ?></td>
                     <td class="px-5 py-3.5 font-medium text-gray-700"><?= sanitize($v['english_meaning']) ?></td>
@@ -301,13 +316,19 @@ document.addEventListener('keydown', (e) => {
             elseif ($us === 'favorite') echo '<span class="text-amber-500 text-xs">★</span>';
             ?>
         </div>
-        <p class="korean-text text-2xl font-bold text-gray-900 mb-1"><?= sanitize($v['korean_word']) ?></p>
+        <div class="flex items-center gap-2 mb-1">
+            <p class="korean-text text-2xl font-bold text-gray-900"><?= sanitize($v['korean_word']) ?></p>
+            <?= speakerBtnInline($v['korean_word'], ['module' => 'vocabulary', 'itemId' => $v['id'], 'audioUrl' => $v['audio_path'] ? APP_URL . '/uploads/' . $v['audio_path'] : '']) ?>
+        </div>
         <p class="text-xs text-gray-400 mb-2"><?= sanitize($v['transliteration'] ?? '') ?></p>
         <p class="text-sm font-medium text-blue-600 mb-1"><?= sanitize($v['english_meaning']) ?></p>
         <p class="text-xs text-gray-400 capitalize mb-3"><?= $v['part_of_speech'] ?></p>
         <?php if ($v['example_sentence_kr']): ?>
         <div class="pt-3 border-t border-gray-50">
-            <p class="text-xs text-gray-500 korean-text"><?= sanitize($v['example_sentence_kr']) ?></p>
+            <div class="flex items-center gap-1">
+                <p class="text-xs text-gray-500 korean-text flex-1"><?= sanitize($v['example_sentence_kr']) ?></p>
+                <?= speakerBtnInline($v['example_sentence_kr'], ['module' => 'vocabulary', 'itemId' => $v['id']]) ?>
+            </div>
             <p class="text-xs text-gray-400"><?= sanitize($v['example_sentence_en'] ?? '') ?></p>
         </div>
         <?php endif; ?>

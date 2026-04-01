@@ -8,6 +8,8 @@ uploads/audio/listening/*.ogg
 uploads/audio/exam/*.mp3
 uploads/audio/exam/*.wav
 uploads/audio/exam/*.ogg
+uploads/audio/tts/*.mp3
+uploads/audio/tts/*.wav
 uploads/profiles/*.jpg
 uploads/profiles/*.png
 uploads/profiles/*.gif

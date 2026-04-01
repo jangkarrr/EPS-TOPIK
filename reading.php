@@ -84,6 +84,15 @@ if ($passageId) {
                 <span class="px-2.5 py-1 text-xs rounded-lg bg-gray-50 text-gray-500 capitalize"><?= $passage['content_type'] ?></span>
             </div>
             <h2 class="text-xl font-bold text-gray-900 mb-4"><?= sanitize($passage['title']) ?></h2>
+
+            <?php
+            // Extract plain Korean text from passage HTML for TTS
+            $passagePlainText = trim(strip_tags($passage['passage_text']));
+            ?>
+            <div class="mb-4">
+                <?= passageListenBtn($passagePlainText, ['module' => 'reading', 'itemId' => $passage['id']]) ?>
+            </div>
+
             <div class="prose prose-sm max-w-none korean-text leading-relaxed text-gray-700 bg-gray-50 rounded-xl p-6 border border-gray-100">
                 <?= $passage['passage_text'] ?>
             </div>

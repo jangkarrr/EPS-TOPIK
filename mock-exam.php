@@ -228,15 +228,26 @@ if ($examId) {
                         <span class="text-xs text-gray-400"><?= $q['points'] ?> pts</span>
                     </div>
 
-                    <?php if ($q['audio_path']): ?>
+                    <?php
+                    $examHasAudio = !empty($q['audio_path']) && $q['audio_path'] !== 'audio/exam/placeholder.mp3';
+                    ?>
                     <div class="bg-blue-50 rounded-xl p-4 mb-4 text-center">
-                        <button type="button" onclick="playExamAudio('audio_<?= $q['id'] ?>')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                            Play Audio
-                        </button>
+                        <?php if ($examHasAudio): ?>
                         <audio id="audio_<?= $q['id'] ?>" preload="auto"><source src="<?= APP_URL ?>/uploads/<?= sanitize($q['audio_path']) ?>" type="audio/mpeg"></audio>
+                        <?php endif; ?>
+                        <button type="button"
+                            onclick="playExamAudio('<?= $q['id'] ?>')"
+                            id="examBtn_<?= $q['id'] ?>"
+                            data-has-file="<?= $examHasAudio ? '1' : '0' ?>"
+                            data-tts-text="<?= htmlspecialchars($q['question_text'], ENT_QUOTES, 'UTF-8') ?>"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                            <span id="examBtnText_<?= $q['id'] ?>">Play Audio</span>
+                        </button>
+                        <?php if (!$examHasAudio): ?>
+                        <p class="text-xs text-amber-500 mt-1.5">AI voice</p>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
 
                     <p class="text-sm font-semibold text-gray-900 mb-4"><?= sanitize($q['question_text']) ?></p>
 
@@ -319,7 +330,40 @@ if ($examId) {
         if (nav) { nav.classList.add('bg-blue-500', 'text-white', 'border-blue-500'); nav.classList.remove('text-gray-500'); }
     }
 
-    function playExamAudio(id) { const a = document.getElementById(id); if(a) { a.currentTime = 0; a.play(); } }
+    let currentExamAudio = null;
+    function playExamAudio(qId) {
+        // Stop any previous playback
+        if (currentExamAudio) { currentExamAudio.pause(); currentExamAudio.currentTime = 0; }
+        KoreanTTS.stop();
+
+        const btn = document.getElementById('examBtn_' + qId);
+        const hasFile = btn?.dataset.hasFile === '1';
+        const ttsText = btn?.dataset.ttsText || '';
+        const textEl = document.getElementById('examBtnText_' + qId);
+
+        if (hasFile) {
+            const a = document.getElementById('audio_' + qId);
+            if (a) {
+                currentExamAudio = a;
+                if (textEl) textEl.textContent = 'Playing...';
+                a.currentTime = 0;
+                a.play();
+                a.onended = () => { if (textEl) textEl.textContent = 'Play Again'; currentExamAudio = null; };
+                a.onerror = () => {
+                    // Fallback to TTS on file error
+                    if (ttsText) KoreanTTS.speak(ttsText, { type: 'browser_tts', onEnd: () => { if (textEl) textEl.textContent = 'Play Again'; } });
+                    else if (textEl) textEl.textContent = 'Play Again';
+                };
+            }
+        } else if (ttsText) {
+            if (textEl) textEl.textContent = 'Playing...';
+            KoreanTTS.speak(ttsText, {
+                type: 'browser_tts',
+                onEnd: () => { if (textEl) textEl.textContent = 'Play Again'; },
+                onError: () => { if (textEl) textEl.textContent = 'Play Again'; }
+            });
+        }
+    }
 
     function confirmSubmit() {
         const unanswered = document.querySelectorAll('.question-nav:not(.bg-blue-500)').length;

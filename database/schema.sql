@@ -414,6 +414,55 @@ CREATE TABLE admin_logs (
 ) ENGINE=InnoDB;
 
 -- ============================================================
+-- SYSTEM SETTINGS (for admin-configurable options)
+-- ============================================================
+
+CREATE TABLE system_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    setting_group VARCHAR(50) DEFAULT 'general',
+    description VARCHAR(255) DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Voice/TTS defaults
+INSERT INTO system_settings (setting_key, setting_value, setting_group, description) VALUES
+('tts_provider', 'browser_tts', 'voice', 'Active TTS provider: browser_tts | google_cloud | openai'),
+('tts_fallback_enabled', '1', 'voice', 'Enable browser TTS as fallback when premium unavailable'),
+('tts_default_rate', '1', 'voice', 'Default speech rate (0.5 - 2.0)'),
+('tts_default_pitch', '1', 'voice', 'Default speech pitch (0.5 - 2.0)'),
+('tts_audio_preference', 'uploaded_first', 'voice', 'Audio priority: uploaded_first | generated_first | browser_only'),
+('tts_google_api_key', '', 'voice', 'Google Cloud TTS API key'),
+('tts_openai_api_key', '', 'voice', 'OpenAI TTS API key'),
+('tts_cache_enabled', '1', 'voice', 'Cache generated audio files');
+
+-- ============================================================
+-- GENERATED AUDIO CACHE
+-- ============================================================
+
+CREATE TABLE generated_audio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    module_type ENUM('vocabulary','lesson','reading','listening','mock_exam','phrase') NOT NULL,
+    module_item_id INT DEFAULT NULL,
+    korean_text TEXT NOT NULL,
+    text_hash VARCHAR(64) NOT NULL,
+    provider ENUM('browser_tts','google_cloud','openai','uploaded') DEFAULT 'browser_tts',
+    audio_path VARCHAR(500) DEFAULT NULL,
+    audio_format VARCHAR(10) DEFAULT 'mp3',
+    duration_seconds DECIMAL(6,2) DEFAULT NULL,
+    is_cached TINYINT(1) DEFAULT 0,
+    status ENUM('pending','generating','ready','failed') DEFAULT 'pending',
+    error_message VARCHAR(500) DEFAULT NULL,
+    play_count INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_text_provider (text_hash, provider),
+    INDEX idx_module (module_type, module_item_id),
+    INDEX idx_status (status),
+    INDEX idx_text_hash (text_hash)
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- SAMPLE DATA
 -- ============================================================
 

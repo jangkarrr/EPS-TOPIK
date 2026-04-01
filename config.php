@@ -31,5 +31,12 @@ define('ITEMS_PER_PAGE', 15);
 // CSRF Token Name
 define('CSRF_TOKEN_NAME', 'csrf_token');
 
+// Voice/TTS Configuration
+define('TTS_AUDIO_DIR', AUDIO_DIR . 'tts/');
+define('TTS_DEFAULT_PROVIDER', 'browser_tts'); // browser_tts | google_cloud | openai
+define('TTS_DEFAULT_RATE', 1.0);
+define('TTS_DEFAULT_PITCH', 1.0);
+define('TTS_CACHE_ENABLED', true);
+
 // Timezone
 date_default_timezone_set('Asia/Manila');
