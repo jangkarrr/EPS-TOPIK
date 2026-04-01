@@ -274,6 +274,7 @@ document.addEventListener('keydown', (e) => {
                     <td class="px-5 py-3.5">
                         <span class="korean-text text-base font-bold text-gray-900"><?= sanitize($v['korean_word']) ?></span>
                         <?= speakerBtnInline($v['korean_word'], ['module' => 'vocabulary', 'itemId' => $v['id'], 'audioUrl' => $v['audio_path'] ? APP_URL . '/uploads/' . $v['audio_path'] : '']) ?>
+                        <?= speakerBtnInline($v['korean_word'], ['rate' => 0.6, 'class' => 'bg-amber-50 hover:bg-amber-100 text-amber-500', 'module' => 'vocabulary', 'itemId' => $v['id']]) ?>
                     </td>
                     <td class="px-5 py-3.5 text-gray-500"><?= sanitize($v['transliteration'] ?? '') ?></td>
                     <td class="px-5 py-3.5 font-medium text-gray-700"><?= sanitize($v['english_meaning']) ?></td>
@@ -319,6 +320,7 @@ document.addEventListener('keydown', (e) => {
         <div class="flex items-center gap-2 mb-1">
             <p class="korean-text text-2xl font-bold text-gray-900"><?= sanitize($v['korean_word']) ?></p>
             <?= speakerBtnInline($v['korean_word'], ['module' => 'vocabulary', 'itemId' => $v['id'], 'audioUrl' => $v['audio_path'] ? APP_URL . '/uploads/' . $v['audio_path'] : '']) ?>
+            <?= speakerBtnInline($v['korean_word'], ['rate' => 0.6, 'class' => 'bg-amber-50 hover:bg-amber-100 text-amber-500', 'module' => 'vocabulary', 'itemId' => $v['id']]) ?>
         </div>
         <p class="text-xs text-gray-400 mb-2"><?= sanitize($v['transliteration'] ?? '') ?></p>
         <p class="text-sm font-medium text-blue-600 mb-1"><?= sanitize($v['english_meaning']) ?></p>
@@ -328,6 +330,7 @@ document.addEventListener('keydown', (e) => {
             <div class="flex items-center gap-1">
                 <p class="text-xs text-gray-500 korean-text flex-1"><?= sanitize($v['example_sentence_kr']) ?></p>
                 <?= speakerBtnInline($v['example_sentence_kr'], ['module' => 'vocabulary', 'itemId' => $v['id']]) ?>
+                <?= speakerBtnInline($v['example_sentence_kr'], ['rate' => 0.6, 'class' => 'bg-amber-50 hover:bg-amber-100 text-amber-500', 'module' => 'vocabulary', 'itemId' => $v['id']]) ?>
             </div>
             <p class="text-xs text-gray-400"><?= sanitize($v['example_sentence_en'] ?? '') ?></p>
         </div>

@@ -166,6 +166,11 @@ require_once __DIR__ . '/includes/header.php';
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                     <span id="playText">Play Audio</span>
                 </button>
+                <button onclick="playListeningAudioSlow()" id="slowBtn"
+                    class="inline-flex items-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-amber-500/20" title="Play at 0.6x speed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Slow</span>
+                </button>
                 <button onclick="replayListeningAudio()" class="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition" title="Replay">
                     <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 </button>
@@ -359,6 +364,33 @@ function playListeningAudio() {
             onEnd: resetPlayState,
             onError: resetPlayState
         });
+    } else {
+        resetPlayState();
+    }
+}
+
+function playListeningAudioSlow() {
+    if (listeningPlaying) { stopListeningAudio(); }
+
+    const hasFile = playBtn?.dataset.hasFile === '1';
+    const ttsText = playBtn?.dataset.ttsText || '';
+
+    listeningPlaying = true;
+    document.getElementById('playText').textContent = 'Playing slow...';
+
+    if (hasFile && audioEl) {
+        audioEl.playbackRate = 0.6;
+        audioEl.currentTime = 0;
+        audioEl.play();
+        audioEl.onended = () => { audioEl.playbackRate = 1.0; resetPlayState(); };
+        audioEl.onerror = () => {
+            audioEl.playbackRate = 1.0;
+            if (ttsText) {
+                KoreanTTS.speak(ttsText, { type: 'browser_tts', rate: 0.6, onEnd: resetPlayState, onError: resetPlayState });
+            } else { resetPlayState(); }
+        };
+    } else if (ttsText) {
+        KoreanTTS.speak(ttsText, { type: 'browser_tts', rate: 0.6, onEnd: resetPlayState, onError: resetPlayState });
     } else {
         resetPlayState();
     }

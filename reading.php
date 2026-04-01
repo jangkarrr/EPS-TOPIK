@@ -89,8 +89,9 @@ if ($passageId) {
             // Extract plain Korean text from passage HTML for TTS
             $passagePlainText = trim(strip_tags($passage['passage_text']));
             ?>
-            <div class="mb-4">
-                <?= passageListenBtn($passagePlainText, ['module' => 'reading', 'itemId' => $passage['id']]) ?>
+            <div class="mb-4 flex flex-col sm:flex-row gap-2">
+                <?= passageListenBtn($passagePlainText, ['module' => 'reading', 'itemId' => $passage['id'], 'class' => 'flex-1 justify-center bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-100']) ?>
+                <?= speakerBtn($passagePlainText, ['size' => 'lg', 'label' => 'Slow playback', 'rate' => 0.6, 'module' => 'reading', 'itemId' => $passage['id'], 'class' => 'sm:w-auto justify-center bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-700 border border-amber-100']) ?>
             </div>
 
             <div class="prose prose-sm max-w-none korean-text leading-relaxed text-gray-700 bg-gray-50 rounded-xl p-6 border border-gray-100">

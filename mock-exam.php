@@ -244,6 +244,12 @@ if ($examId) {
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                             <span id="examBtnText_<?= $q['id'] ?>">Play Audio</span>
                         </button>
+                        <button type="button"
+                            onclick="playExamAudioSlow('<?= $q['id'] ?>')"
+                            class="inline-flex items-center gap-2 px-3 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition" title="Slow playback">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Slow
+                        </button>
                         <?php if (!$examHasAudio): ?>
                         <p class="text-xs text-amber-500 mt-1.5">AI voice</p>
                         <?php endif; ?>
@@ -359,6 +365,42 @@ if ($examId) {
             if (textEl) textEl.textContent = 'Playing...';
             KoreanTTS.speak(ttsText, {
                 type: 'browser_tts',
+                onEnd: () => { if (textEl) textEl.textContent = 'Play Again'; },
+                onError: () => { if (textEl) textEl.textContent = 'Play Again'; }
+            });
+        }
+    }
+
+    function playExamAudioSlow(qId) {
+        // Stop any previous playback
+        if (currentExamAudio) { currentExamAudio.pause(); currentExamAudio.currentTime = 0; currentExamAudio.playbackRate = 1.0; }
+        KoreanTTS.stop();
+
+        const btn = document.getElementById('examBtn_' + qId);
+        const hasFile = btn?.dataset.hasFile === '1';
+        const ttsText = btn?.dataset.ttsText || '';
+        const textEl = document.getElementById('examBtnText_' + qId);
+
+        if (hasFile) {
+            const a = document.getElementById('audio_' + qId);
+            if (a) {
+                currentExamAudio = a;
+                if (textEl) textEl.textContent = 'Playing slow...';
+                a.playbackRate = 0.6;
+                a.currentTime = 0;
+                a.play();
+                a.onended = () => { a.playbackRate = 1.0; if (textEl) textEl.textContent = 'Play Again'; currentExamAudio = null; };
+                a.onerror = () => {
+                    a.playbackRate = 1.0;
+                    if (ttsText) KoreanTTS.speak(ttsText, { type: 'browser_tts', rate: 0.6, onEnd: () => { if (textEl) textEl.textContent = 'Play Again'; } });
+                    else if (textEl) textEl.textContent = 'Play Again';
+                };
+            }
+        } else if (ttsText) {
+            if (textEl) textEl.textContent = 'Playing slow...';
+            KoreanTTS.speak(ttsText, {
+                type: 'browser_tts',
+                rate: 0.6,
                 onEnd: () => { if (textEl) textEl.textContent = 'Play Again'; },
                 onError: () => { if (textEl) textEl.textContent = 'Play Again'; }
             });
