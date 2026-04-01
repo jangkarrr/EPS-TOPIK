@@ -1,0 +1,31 @@
+# Uploads (keep directory structure, ignore user files)
+uploads/audio/*.mp3
+uploads/audio/*.wav
+uploads/audio/*.ogg
+uploads/audio/listening/*.mp3
+uploads/audio/listening/*.wav
+uploads/audio/listening/*.ogg
+uploads/audio/exam/*.mp3
+uploads/audio/exam/*.wav
+uploads/audio/exam/*.ogg
+uploads/profiles/*.jpg
+uploads/profiles/*.png
+uploads/profiles/*.gif
+uploads/profiles/*.webp
+!uploads/**/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+error_log
