@@ -748,3 +748,41 @@ INSERT INTO mock_exam_questions (exam_id, section, question_number, passage_text
 (1, 'reading', 8, '김민수 씨는 자동차 공장에서 일합니다. 매일 아침 8시에 출근해서 오후 5시에 퇴근합니다. 점심은 공장 식당에서 먹습니다.', 'Where does Mr. Kim eat lunch?', 'At home', 'At a restaurant', 'At the factory cafeteria', 'He skips lunch', 'C', '점심은 공장 식당에서 먹습니다 means "He eats lunch at the factory cafeteria."', 4),
 (1, 'reading', 9, '⚠️ 이 구역은 관계자 외 출입금지입니다.\n안전장비를 착용하지 않으면 들어갈 수 없습니다.', 'Who can enter this area?', 'Anyone with permission', 'Only authorized personnel with safety equipment', 'Visitors with a guide', 'All employees', 'B', 'The sign says only authorized persons (관계자) can enter, and safety equipment (안전장비) must be worn.', 4),
 (1, 'reading', 10, '한국어 수업 안내\n일시: 매주 토요일 오전 10시~12시\n장소: 다문화센터 3층\n대상: 외국인 근로자\n비용: 무료', 'How much does the Korean class cost?', '10,000 won', '20,000 won', '50,000 won', 'Free', 'D', '비용: 무료 means "Cost: Free"', 4);
+
+-- ============================================================
+-- FLASHCARD DECKS & FLASHCARDS
+-- ============================================================
+
+CREATE TABLE flashcard_decks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(200) NOT NULL DEFAULT 'My Flashcards',
+    description TEXT DEFAULT NULL,
+    color VARCHAR(20) DEFAULT '#3B82F6',
+    sort_order INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE flashcards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    deck_id INT DEFAULT NULL,
+    term VARCHAR(500) NOT NULL,
+    definition TEXT NOT NULL,
+    image_path VARCHAR(255) DEFAULT NULL,
+    status ENUM('new','known','review') DEFAULT 'new',
+    review_count INT DEFAULT 0,
+    last_reviewed DATETIME DEFAULT NULL,
+    sort_order INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (deck_id) REFERENCES flashcard_decks(id) ON DELETE SET NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_deck (deck_id),
+    INDEX idx_status (status),
+    FULLTEXT idx_search (term, definition)
+) ENGINE=InnoDB;
