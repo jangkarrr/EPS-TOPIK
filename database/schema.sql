@@ -157,6 +157,7 @@ CREATE TABLE listening_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT DEFAULT NULL,
     audio_path VARCHAR(255) NOT NULL,
+    dialogue_text TEXT DEFAULT NULL,
     question_text TEXT NOT NULL,
     choice_a VARCHAR(300) NOT NULL,
     choice_b VARCHAR(300) NOT NULL,

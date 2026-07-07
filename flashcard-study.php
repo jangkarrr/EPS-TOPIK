@@ -116,6 +116,93 @@ require_once __DIR__ . '/includes/header.php';
     color: #3b82f6;
 }
 
+.study-card-tts {
+    position: absolute;
+    top: 0.85rem;
+    right: 1.25rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    z-index: 5;
+}
+
+.study-card-front .study-card-tts {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.study-card-front .study-card-tts:hover {
+    background: #dbeafe;
+}
+
+.study-card-back .study-card-tts {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.study-card-back .study-card-tts:hover {
+    background: #bfdbfe;
+}
+
+.study-card-tts.tts-active {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+.study-card-tts.tts-active svg {
+    animation: tts-pulse 1s ease-in-out infinite;
+}
+
+@keyframes tts-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.text-size-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
+.text-size-control input[type=range] {
+    width: 70px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    outline: none;
+    cursor: pointer;
+}
+
+.text-size-control input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+}
+
+.text-size-control input[type=range]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #3b82f6;
+    border: none;
+    cursor: pointer;
+}
+
 .study-progress-bar {
     height: 4px;
     border-radius: 9999px;
@@ -245,6 +332,13 @@ require_once __DIR__ . '/includes/header.php';
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Shuffle
             </button>
+
+            <!-- Text Size -->
+            <div class="text-size-control" title="Adjust text size">
+                <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><text x="4" y="18" font-size="14" font-weight="bold">A</text></svg>
+                <input type="range" id="study-text-size" min="1" max="4" step="0.5" value="2" oninput="StudyMode.setTextSize(this.value)">
+                <svg class="w-5 h-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><text x="2" y="20" font-size="20" font-weight="bold">A</text></svg>
+            </div>
         </div>
     </div>
 
@@ -265,12 +359,18 @@ require_once __DIR__ . '/includes/header.php';
             <div class="study-card-inner" id="study-card">
                 <div class="study-card-front">
                     <span class="study-card-label" id="study-front-label">TERM</span>
+                    <button type="button" class="study-card-tts" id="study-front-tts" onclick="event.stopPropagation(); StudyMode.playTermAudio('front')" title="Listen (P)">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg>
+                    </button>
                     <div id="study-front-image"></div>
                     <div class="study-card-text korean-text" id="study-front-text"></div>
                     <p class="absolute bottom-4 text-xs text-gray-300">Click or press Space to flip</p>
                 </div>
                 <div class="study-card-back">
                     <span class="study-card-label" id="study-back-label">DEFINITION</span>
+                    <button type="button" class="study-card-tts" id="study-back-tts" onclick="event.stopPropagation(); StudyMode.playTermAudio('back')" title="Listen (P)">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg>
+                    </button>
                     <div id="study-back-image"></div>
                     <div class="study-card-text" id="study-back-text"></div>
                 </div>
@@ -309,8 +409,10 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="flex items-center gap-2"><span class="shortcut-key">→</span><span class="text-gray-500">Next card</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">Space</span><span class="text-gray-500">Flip card</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">S</span><span class="text-gray-500">Toggle shuffle</span></div>
+                <div class="flex items-center gap-2"><span class="shortcut-key">P</span><span class="text-gray-500">Play audio</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">1</span><span class="text-gray-500">Mark as Known</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">2</span><span class="text-gray-500">Mark as Review</span></div>
+                <div class="flex items-center gap-2"><span class="shortcut-key">+ / −</span><span class="text-gray-500">Text size</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">Esc</span><span class="text-gray-500">Back to list</span></div>
             </div>
         </div>
@@ -414,8 +516,25 @@ const StudyMode = {
     isFlipped: false,
     isShuffled: false,
     frontSide: 'term', // 'term' or 'definition'
+    textSizeLevel: parseFloat(localStorage.getItem('fc_text_size') || '2'),
+    ttsPlaying: false,
+
+    TEXT_SIZES: {
+        1:   { card: '1rem',   mobile: '0.875rem' },
+        1.5: { card: '1.5rem', mobile: '1.125rem' },
+        2:   { card: '2rem',   mobile: '1.5rem' },
+        2.5: { card: '2.5rem', mobile: '1.875rem' },
+        3:   { card: '3rem',   mobile: '2.25rem' },
+        3.5: { card: '3.5rem', mobile: '2.625rem' },
+        4:   { card: '4rem',   mobile: '3rem' },
+    },
 
     async init() {
+        // Restore saved text size
+        const slider = document.getElementById('study-text-size');
+        if (slider) slider.value = this.textSizeLevel;
+        this.applyTextSize();
+
         await this.loadCards();
         this.bindEvents();
     },
@@ -476,6 +595,21 @@ const StudyMode = {
                 case 'S':
                     e.preventDefault();
                     this.toggleShuffle();
+                    break;
+                case 'p':
+                case 'P':
+                    e.preventDefault();
+                    this.playTermAudio(this.isFlipped ? 'back' : 'front');
+                    break;
+                case '=':
+                case '+':
+                    e.preventDefault();
+                    this.adjustTextSize(0.5);
+                    break;
+                case '-':
+                case '_':
+                    e.preventDefault();
+                    this.adjustTextSize(-0.5);
                     break;
                 case '1':
                     e.preventDefault();
@@ -555,6 +689,15 @@ const StudyMode = {
         // Update nav button states
         document.getElementById('study-prev-btn').disabled = this.currentIndex === 0;
         document.getElementById('study-next-btn').disabled = this.currentIndex >= this.cards.length - 1;
+
+        // Show/hide TTS buttons (only show if the text side has Korean-like content)
+        const frontTtsBtn = document.getElementById('study-front-tts');
+        const backTtsBtn = document.getElementById('study-back-tts');
+        if (frontTtsBtn) frontTtsBtn.style.display = frontText ? '' : 'none';
+        if (backTtsBtn) backTtsBtn.style.display = backText ? '' : 'none';
+
+        // Apply current text size
+        this.applyTextSize();
     },
 
     flip() {
@@ -655,6 +798,81 @@ const StudyMode = {
         } catch {
             showToast('Failed to update status', 'error');
         }
+    },
+
+    // ── TTS Audio Playback ──────────────────────────────────
+    playTermAudio(side) {
+        // Stop any existing playback
+        if (this.ttsPlaying) {
+            if (typeof KoreanTTS !== 'undefined') KoreanTTS.stop();
+            window.speechSynthesis?.cancel();
+            this.resetTtsButtons();
+            this.ttsPlaying = false;
+            return;
+        }
+
+        if (this.cards.length === 0) return;
+
+        const card = this.cards[this.currentIndex];
+        const textToSpeak = side === 'front'
+            ? (this.frontSide === 'term' ? card.term : card.definition)
+            : (this.frontSide === 'term' ? card.definition : card.term);
+
+        if (!textToSpeak) return;
+
+        const btn = document.getElementById(side === 'front' ? 'study-front-tts' : 'study-back-tts');
+        if (btn) btn.classList.add('tts-active');
+        this.ttsPlaying = true;
+
+        const onDone = () => {
+            this.ttsPlaying = false;
+            this.resetTtsButtons();
+        };
+
+        // Try KoreanTTS first (project's TTS system), fallback to browser
+        if (typeof KoreanTTS !== 'undefined') {
+            KoreanTTS.speak(textToSpeak, {
+                type: 'browser_tts',
+                onEnd: onDone,
+                onError: onDone
+            });
+        } else if ('speechSynthesis' in window) {
+            const utter = new SpeechSynthesisUtterance(textToSpeak);
+            utter.lang = 'ko-KR';
+            utter.rate = 0.9;
+            utter.onend = onDone;
+            utter.onerror = onDone;
+            window.speechSynthesis.speak(utter);
+        }
+    },
+
+    resetTtsButtons() {
+        document.querySelectorAll('.study-card-tts').forEach(b => b.classList.remove('tts-active'));
+    },
+
+    // ── Text Size Control ──────────────────────────────────
+    setTextSize(val) {
+        this.textSizeLevel = parseFloat(val);
+        localStorage.setItem('fc_text_size', this.textSizeLevel);
+        this.applyTextSize();
+    },
+
+    adjustTextSize(delta) {
+        let newVal = Math.min(4, Math.max(1, this.textSizeLevel + delta));
+        this.textSizeLevel = newVal;
+        localStorage.setItem('fc_text_size', newVal);
+        const slider = document.getElementById('study-text-size');
+        if (slider) slider.value = newVal;
+        this.applyTextSize();
+    },
+
+    applyTextSize() {
+        const size = this.TEXT_SIZES[this.textSizeLevel] || this.TEXT_SIZES[2];
+        const isMobile = window.innerWidth < 640;
+        const fontSize = isMobile ? size.mobile : size.card;
+        document.querySelectorAll('.study-card-text').forEach(el => {
+            el.style.fontSize = fontSize;
+        });
     },
 };
 

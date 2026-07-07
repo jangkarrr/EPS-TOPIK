@@ -147,6 +147,8 @@ require_once __DIR__ . '/includes/header.php';
         <?php
         $hasAudioFile = !empty($q['audio_path']) && $q['audio_path'] !== 'audio/listening/placeholder.mp3';
         $audioSrc = $hasAudioFile ? APP_URL . '/uploads/' . sanitize($q['audio_path']) : '';
+        // Use dialogue_text for TTS if available, fall back to question_text
+        $ttsText = !empty($q['dialogue_text']) ? $q['dialogue_text'] : $q['question_text'];
         ?>
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 text-center">
             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
@@ -160,7 +162,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="flex items-center justify-center gap-3">
                 <button onclick="playListeningAudio()" id="playBtn"
                     data-audio-url="<?= $audioSrc ?>"
-                    data-tts-text="<?= htmlspecialchars($q['question_text'], ENT_QUOTES, 'UTF-8') ?>"
+                    data-tts-text="<?= htmlspecialchars($ttsText, ENT_QUOTES, 'UTF-8') ?>"
                     data-has-file="<?= $hasAudioFile ? '1' : '0' ?>"
                     class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-blue-600/20">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
@@ -184,6 +186,19 @@ require_once __DIR__ . '/includes/header.php';
             <p class="text-xs text-blue-400 mt-2">Listen carefully, then answer below</p>
             <?php endif; ?>
         </div>
+
+        <!-- Dialogue Script (Korean conversation) -->
+        <?php if (!empty($q['dialogue_text'])): ?>
+        <div class="mb-6">
+            <button type="button" onclick="toggleScript(this)" class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mb-3 transition">
+                <svg class="w-4 h-4 script-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <span class="script-toggle-text">대화 보기 (Show Script)</span>
+            </button>
+            <div class="dialogue-script hidden bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-5 border border-gray-100">
+                <div class="korean-text text-sm leading-relaxed text-gray-700 whitespace-pre-line"><?= nl2br(sanitize($q['dialogue_text'])) ?></div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Question Text -->
         <h3 class="text-lg font-semibold text-gray-900 mb-6"><?= sanitize($q['question_text']) ?></h3>
@@ -411,6 +426,22 @@ function resetPlayState() {
     listeningPlaying = false;
     const txt = document.getElementById('playText');
     if (txt) txt.textContent = 'Play Again';
+}
+
+function toggleScript(btn) {
+    const container = btn.parentElement;
+    const script = container.querySelector('.dialogue-script');
+    const icon = btn.querySelector('.script-icon');
+    const text = btn.querySelector('.script-toggle-text');
+    if (script.classList.contains('hidden')) {
+        script.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+        text.textContent = '대화 숨기기 (Hide Script)';
+    } else {
+        script.classList.add('hidden');
+        icon.style.transform = '';
+        text.textContent = '대화 보기 (Show Script)';
+    }
 }
 </script>
 

@@ -172,6 +172,11 @@ if ($examId) {
                         | Correct: <strong class="text-green-600"><?= $q['correct_answer'] ?></strong>
                     </span>
                 </div>
+                <?php if (!empty($q['passage_text'])): ?>
+                <div class="bg-gray-50 rounded-lg p-3 mb-2 korean-text text-xs leading-relaxed text-gray-600 whitespace-pre-line border border-gray-100">
+                    <?= nl2br(sanitize($q['passage_text'])) ?>
+                </div>
+                <?php endif; ?>
                 <p class="text-sm text-gray-700"><?= sanitize($q['question_text']) ?></p>
                 <?php if (!($ans && $ans['is_correct']) && $q['explanation']): ?>
                 <p class="text-xs text-blue-600 mt-1">💡 <?= sanitize($q['explanation']) ?></p>
@@ -230,6 +235,8 @@ if ($examId) {
 
                     <?php
                     $examHasAudio = !empty($q['audio_path']) && $q['audio_path'] !== 'audio/exam/placeholder.mp3';
+                    // Use passage_text (dialogue script) for TTS, fall back to question_text
+                    $examTtsText = !empty($q['passage_text']) ? $q['passage_text'] : $q['question_text'];
                     ?>
                     <div class="bg-blue-50 rounded-xl p-4 mb-4 text-center">
                         <?php if ($examHasAudio): ?>
@@ -239,7 +246,7 @@ if ($examId) {
                             onclick="playExamAudio('<?= $q['id'] ?>')"
                             id="examBtn_<?= $q['id'] ?>"
                             data-has-file="<?= $examHasAudio ? '1' : '0' ?>"
-                            data-tts-text="<?= htmlspecialchars($q['question_text'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-tts-text="<?= htmlspecialchars($examTtsText, ENT_QUOTES, 'UTF-8') ?>"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                             <span id="examBtnText_<?= $q['id'] ?>">Play Audio</span>
@@ -254,6 +261,18 @@ if ($examId) {
                         <p class="text-xs text-amber-500 mt-1.5">AI voice</p>
                         <?php endif; ?>
                     </div>
+
+                    <?php if (!empty($q['passage_text'])): ?>
+                    <div class="mb-4">
+                        <button type="button" onclick="toggleExamScript(this)" class="inline-flex items-center gap-2 text-xs font-medium text-blue-600 hover:text-blue-700 mb-2 transition">
+                            <svg class="w-3.5 h-3.5 script-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <span class="script-toggle-text">대화 보기 (Show Script)</span>
+                        </button>
+                        <div class="dialogue-script hidden bg-gray-50 rounded-xl p-4 korean-text text-sm leading-relaxed text-gray-700 whitespace-pre-line border border-gray-100">
+                            <?= nl2br(sanitize($q['passage_text'])) ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
                     <p class="text-sm font-semibold text-gray-900 mb-4"><?= sanitize($q['question_text']) ?></p>
 
@@ -424,6 +443,22 @@ if ($examId) {
 
     // Warn before leaving
     window.addEventListener('beforeunload', (e) => { e.preventDefault(); e.returnValue = ''; });
+
+    function toggleExamScript(btn) {
+        const container = btn.parentElement;
+        const script = container.querySelector('.dialogue-script');
+        const icon = btn.querySelector('.script-icon');
+        const text = btn.querySelector('.script-toggle-text');
+        if (script.classList.contains('hidden')) {
+            script.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+            text.textContent = '대화 숨기기 (Hide Script)';
+        } else {
+            script.classList.add('hidden');
+            icon.style.transform = '';
+            text.textContent = '대화 보기 (Show Script)';
+        }
+    }
     </script>
     <?php endif; ?>
 
