@@ -358,39 +358,64 @@ try {
                 break;
             }
 
+            // Pre-load existing folders for this user (name => id cache)
+            $folderCache = [];
+            $folderStmt = $db->prepare("SELECT id, name FROM flashcard_decks WHERE user_id = ?");
+            $folderStmt->execute([$userId]);
+            foreach ($folderStmt->fetchAll() as $f) {
+                $folderCache[mb_strtolower(trim($f['name']))] = (int)$f['id'];
+            }
+
             $imported = 0;
             $skipped = 0;
-            $stmt = $db->prepare("INSERT INTO flashcards (user_id, term, definition, image_path) VALUES (?, ?, ?, ?)");
+            $foldersCreated = 0;
+            $insertStmt = $db->prepare("INSERT INTO flashcards (user_id, deck_id, term, definition, image_path) VALUES (?, ?, ?, ?, ?)");
+            $createFolderStmt = $db->prepare("INSERT INTO flashcard_decks (user_id, name) VALUES (?, ?)");
 
             foreach ($cardsData as $card) {
                 $term = trim($card['term'] ?? '');
                 $definition = trim($card['definition'] ?? '');
                 $image = trim($card['image'] ?? '') ?: null;
+                $folderName = trim($card['folder'] ?? '');
 
                 if (!$term || !$definition) {
                     $skipped++;
                     continue;
                 }
 
-                $stmt->execute([$userId, $term, $definition, $image]);
+                // Resolve folder/deck_id
+                $deckId = null;
+                if ($folderName !== '') {
+                    $folderKey = mb_strtolower($folderName);
+                    if (isset($folderCache[$folderKey])) {
+                        $deckId = $folderCache[$folderKey];
+                    } else {
+                        // Create new folder
+                        $createFolderStmt->execute([$userId, $folderName]);
+                        $deckId = (int)$db->lastInsertId();
+                        $folderCache[$folderKey] = $deckId;
+                        $foldersCreated++;
+                    }
+                }
+
+                $insertStmt->execute([$userId, $deckId, $term, $definition, $image]);
                 $imported++;
             }
 
             if ($imported > 0) {
-                // Auto-create default deck if none exists
-                $deckCheck = $db->prepare("SELECT id FROM flashcard_decks WHERE user_id = ?");
-                $deckCheck->execute([$userId]);
-                if (!$deckCheck->fetch()) {
-                    $db->prepare("INSERT INTO flashcard_decks (user_id, name) VALUES (?, 'My Flashcards')")->execute([$userId]);
-                }
-                logActivity($userId, 'flashcard_import', "Imported $imported flashcards");
+                logActivity($userId, 'flashcard_import', "Imported $imported flashcards" . ($foldersCreated > 0 ? ", created $foldersCreated folder(s)" : ''));
             }
+
+            $msg = "$imported flashcard(s) imported successfully";
+            if ($foldersCreated > 0) $msg .= ", $foldersCreated folder(s) created";
+            if ($skipped > 0) $msg .= " ($skipped skipped)";
 
             echo json_encode([
                 'success' => true,
                 'imported' => $imported,
                 'skipped' => $skipped,
-                'message' => "$imported flashcard(s) imported successfully" . ($skipped > 0 ? " ($skipped skipped)" : ""),
+                'folders_created' => $foldersCreated,
+                'message' => $msg,
             ]);
             break;
 
@@ -425,17 +450,20 @@ try {
         // ─── EXPORT FLASHCARDS ────────────────────────────
         case 'export':
             $ids = $_GET['ids'] ?? '';
-            $where = "user_id = ?";
+            $where = "f.user_id = ?";
             $params = [$userId];
 
             if ($ids) {
                 $idArr = array_map('intval', explode(',', $ids));
                 $placeholders = implode(',', array_fill(0, count($idArr), '?'));
-                $where .= " AND id IN ($placeholders)";
+                $where .= " AND f.id IN ($placeholders)";
                 $params = array_merge($params, $idArr);
             }
 
-            $stmt = $db->prepare("SELECT term, definition, image_path FROM flashcards WHERE $where ORDER BY created_at DESC");
+            $stmt = $db->prepare("SELECT f.term, f.definition, f.image_path, fd.name as folder_name
+                FROM flashcards f
+                LEFT JOIN flashcard_decks fd ON fd.id = f.deck_id
+                WHERE $where ORDER BY f.created_at DESC");
             $stmt->execute($params);
             $cards = $stmt->fetchAll();
 

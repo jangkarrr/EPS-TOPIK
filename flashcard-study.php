@@ -380,6 +380,139 @@ body.in-study-fullscreen .study-card-back {
 body.in-study-fullscreen .exit-fullscreen-btn {
     display: flex !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES FOR FLASHCARD STUDY
+   ═══════════════════════════════════════════════════════════ */
+
+/* Card faces */
+.dark .study-card-front {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+.dark .study-card-back {
+    background: linear-gradient(135deg, #1e3a5f 0%, #172554 50%, #1e293b 100%) !important;
+    border-color: #1e40af !important;
+    box-shadow: 0 4px 24px rgba(59, 130, 246, 0.15), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Card text */
+.dark .study-card-front .study-card-text {
+    color: #e2e8f0;
+}
+.dark .study-card-back .study-card-text {
+    color: #e2e8f0;
+}
+.dark .study-card-front .absolute.bottom-4 {
+    color: #475569 !important;
+}
+
+/* Card labels */
+.dark .study-card-front .study-card-label {
+    background: #334155;
+    color: #94a3b8;
+}
+.dark .study-card-back .study-card-label {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+/* TTS buttons */
+.dark .study-card-front .study-card-tts {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+.dark .study-card-front .study-card-tts:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+.dark .study-card-back .study-card-tts {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+.dark .study-card-back .study-card-tts:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+/* Navigation buttons */
+.dark .study-nav-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.dark .study-nav-btn:hover {
+    background: #334155;
+    border-color: #475569;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Action buttons (Known / Review) */
+.dark .study-action-btn.bg-emerald-50 {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #6ee7b7 !important;
+}
+.dark .study-action-btn.bg-emerald-50:hover {
+    background: rgba(16, 185, 129, 0.2) !important;
+}
+.dark .study-action-btn.bg-amber-50 {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fcd34d !important;
+}
+.dark .study-action-btn.bg-amber-50:hover {
+    background: rgba(245, 158, 11, 0.2) !important;
+}
+
+/* Shortcut keys */
+.dark .shortcut-key {
+    background: #334155;
+    border-color: #475569;
+    color: #94a3b8;
+}
+
+/* Shortcuts panel */
+.dark #shortcuts-panel {
+    background-color: #1e293b !important;
+}
+
+/* Text size control */
+.dark .text-size-control {
+    background: #1e293b;
+    border-color: #334155;
+}
+.dark .text-size-control input[type=range] {
+    background: #334155 !important;
+}
+
+/* Progress bar */
+.dark .study-progress-bar {
+    background: #334155;
+}
+
+/* Fullscreen mode dark */
+.dark body.in-study-fullscreen #study-container {
+    background: #0f172a !important;
+}
+.dark body.in-study-fullscreen .study-card-front,
+.dark body.in-study-fullscreen .study-card-back {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+.dark .exit-fullscreen-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.dark .exit-fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+/* Back to flashcards link */
+.dark a.border-gray-200 {
+    border-color: #334155 !important;
+}
 </style>
 
 <input type="hidden" id="fc-csrf-name" value="<?= $csrfName ?>">

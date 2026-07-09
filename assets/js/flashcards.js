@@ -690,14 +690,20 @@ const FlashcardManager = {
         const termAliases = ['term', 'word', 'vocabulary', 'korean', 'front', '단어', '용어'];
         const defAliases = ['definition', 'meaning', 'translation', 'english', 'back', '뜻', '의미'];
         const imgAliases = ['image', 'picture', 'photo', 'img', '이미지', '사진'];
+        const folderAliases = ['folder', 'deck', 'set', 'category', 'group', 'chapter', 'unit', 'section', '폴더', '카테고리', '묶음', '단원'];
 
         const findCol = (aliases) => {
-            return headers.find(h => aliases.includes(h.toLowerCase())) || '';
+            // Exact match first
+            const exact = headers.find(h => aliases.includes(h.toLowerCase()));
+            if (exact) return exact;
+            // Partial/contains match
+            return headers.find(h => aliases.some(a => h.toLowerCase().includes(a))) || '';
         };
 
         const termCol = findCol(termAliases) || headers[0] || '';
         const defCol = findCol(defAliases) || headers[1] || '';
         const imgCol = findCol(imgAliases) || '';
+        const folderCol = findCol(folderAliases) || '';
 
         // Build mapping UI
         const optionsHTML = (selected) => {
@@ -711,6 +717,7 @@ const FlashcardManager = {
         document.getElementById('import-map-term').innerHTML = optionsHTML(termCol);
         document.getElementById('import-map-definition').innerHTML = optionsHTML(defCol);
         document.getElementById('import-map-image').innerHTML = optionsHTML(imgCol);
+        document.getElementById('import-map-folder').innerHTML = optionsHTML(folderCol);
 
         this.importData = { headers, rows };
 
@@ -724,6 +731,7 @@ const FlashcardManager = {
         const termCol = document.getElementById('import-map-term').value;
         const defCol = document.getElementById('import-map-definition').value;
         const imgCol = document.getElementById('import-map-image').value;
+        const folderCol = document.getElementById('import-map-folder').value;
 
         if (!termCol || !defCol) {
             showToast('Please map both Term and Definition columns', 'error');
@@ -739,6 +747,7 @@ const FlashcardManager = {
             const term = (row[termCol] || '').trim();
             const definition = (row[defCol] || '').trim();
             const image = imgCol ? (row[imgCol] || '').trim() : '';
+            const folder = folderCol ? (row[folderCol] || '').trim() : '';
 
             if (!term || !definition) {
                 invalid.push({ row: idx + 2, reason: 'Missing term or definition', term, definition });
@@ -751,7 +760,7 @@ const FlashcardManager = {
                 return;
             }
             duplicateSet.add(key);
-            valid.push({ term, definition, image });
+            valid.push({ term, definition, image, folder });
         });
 
         // Render preview
@@ -763,15 +772,19 @@ const FlashcardManager = {
         // Preview table (first 10)
         let previewHTML = '';
         valid.slice(0, 10).forEach((c, i) => {
+            const folderBadge = c.folder
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600">${this.escape(c.folder)}</span>`
+                : '<span class="text-gray-300">-</span>';
             previewHTML += `<tr class="border-b border-gray-50">
                 <td class="px-3 py-2 text-xs text-gray-400">${i + 1}</td>
                 <td class="px-3 py-2 text-sm font-medium korean-text">${this.escape(c.term)}</td>
                 <td class="px-3 py-2 text-sm text-gray-600">${this.escape(c.definition)}</td>
+                <td class="px-3 py-2 text-xs">${folderBadge}</td>
                 <td class="px-3 py-2 text-xs text-gray-400">${this.escape(c.image || '-')}</td>
             </tr>`;
         });
         if (valid.length > 10) {
-            previewHTML += `<tr><td colspan="4" class="px-3 py-2 text-xs text-gray-400 text-center">... and ${valid.length - 10} more</td></tr>`;
+            previewHTML += `<tr><td colspan="5" class="px-3 py-2 text-xs text-gray-400 text-center">... and ${valid.length - 10} more</td></tr>`;
         }
         document.getElementById('import-preview-body').innerHTML = previewHTML;
 
@@ -816,6 +829,7 @@ const FlashcardManager = {
                 closeModal('fc-import-modal');
                 this.loadCards();
                 this.loadStats();
+                FolderManager.loadFolders(); // Reload folders in case new ones were created during import
             } else {
                 showToast(data.error, 'error');
             }

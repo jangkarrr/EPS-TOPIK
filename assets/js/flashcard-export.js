@@ -8,10 +8,11 @@ const FlashcardExport = {
      * Export cards to CSV and trigger download
      */
     toCSV(cards, filename = 'flashcards') {
-        const headers = ['Term', 'Definition', 'Image'];
+        const headers = ['Term', 'Definition', 'Folder', 'Image'];
         const rows = cards.map(c => [
             this._escapeCSV(c.term || c.Term || ''),
             this._escapeCSV(c.definition || c.Definition || ''),
+            this._escapeCSV(c.folder_name || c.Folder || ''),
             this._escapeCSV(c.image_path || c.Image || '')
         ]);
 
@@ -34,6 +35,7 @@ const FlashcardExport = {
         const data = cards.map(c => ({
             Term: c.term || c.Term || '',
             Definition: c.definition || c.Definition || '',
+            Folder: c.folder_name || c.Folder || '',
             Image: c.image_path || c.Image || ''
         }));
 
@@ -45,6 +47,7 @@ const FlashcardExport = {
         ws['!cols'] = [
             { wch: 30 },
             { wch: 50 },
+            { wch: 25 },
             { wch: 30 }
         ];
 

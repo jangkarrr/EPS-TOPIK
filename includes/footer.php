@@ -38,13 +38,14 @@ function closeModal(id) {
     document.body.style.overflow = '';
 }
 
-// Toast notification
+// Toast notification (dark mode aware)
 function showToast(message, type = 'success') {
+    const isDark = document.documentElement.classList.contains('dark');
     const colors = {
-        success: 'bg-green-50 border-green-200 text-green-800',
-        error: 'bg-red-50 border-red-200 text-red-800',
-        info: 'bg-blue-50 border-blue-200 text-blue-800',
-        warning: 'bg-amber-50 border-amber-200 text-amber-800'
+        success: isDark ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-50 border-green-200 text-green-800',
+        error: isDark ? 'bg-red-50 border-red-200 text-red-800' : 'bg-red-50 border-red-200 text-red-800',
+        info: isDark ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-blue-50 border-blue-200 text-blue-800',
+        warning: isDark ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-50 border-amber-200 text-amber-800'
     };
     const toast = document.createElement('div');
     toast.className = `toast fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-xl shadow-lg border ${colors[type] || colors.info}`;
@@ -52,6 +53,35 @@ function showToast(message, type = 'success') {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 }
+
+// ═══════════════════════════════════════════════════
+// DARK MODE
+// ═══════════════════════════════════════════════════
+function toggleDarkMode() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+    syncDarkModeIcons(isDark);
+}
+
+function syncDarkModeIcons(isDark) {
+    const sun = document.getElementById('dark-mode-sun');
+    const moon = document.getElementById('dark-mode-moon');
+    if (sun && moon) {
+        if (isDark) {
+            sun.classList.remove('hidden');
+            moon.classList.add('hidden');
+        } else {
+            sun.classList.add('hidden');
+            moon.classList.remove('hidden');
+        }
+    }
+}
+
+// Sync icons on page load
+document.addEventListener('DOMContentLoaded', () => {
+    syncDarkModeIcons(document.documentElement.classList.contains('dark'));
+});
 </script>
 </body>
 </html>

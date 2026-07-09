@@ -13,6 +13,12 @@ $flash = getFlash();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= isset($pageTitle) ? sanitize($pageTitle) . ' - ' : '' ?><?= APP_NAME ?></title>
+    <!-- Instant dark mode apply (prevents flash of light theme) -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,6 +50,121 @@ $flash = getFlash();
         .schedule-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
         .schedule-table th, .schedule-table td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
         .schedule-table th { background: #f1f5f9; }
+
+        /* ═══════════════════════════════════════════════════
+           DARK MODE
+           ═══════════════════════════════════════════════════ */
+        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-gray-50 { background-color: #0f172a !important; }
+        .dark .bg-white { background-color: #1e293b !important; }
+
+        /* Sidebar */
+        .dark #sidebar { background-color: #1e293b; border-color: #334155; }
+        .dark .sidebar-link { color: #94a3b8; }
+        .dark .sidebar-link:hover { background: rgba(59, 130, 246, 0.08); }
+        .dark .sidebar-link.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: #60a5fa; }
+
+        /* Header */
+        .dark header.sticky { background: rgba(30, 41, 59, 0.85) !important; border-color: #334155 !important; }
+        .dark header .text-gray-800 { color: #e2e8f0 !important; }
+        .dark header .bg-orange-50 { background-color: rgba(251, 146, 60, 0.12) !important; }
+
+        /* Cards & surfaces */
+        .dark .stat-card,
+        .dark .bg-white.rounded-xl,
+        .dark .bg-white.rounded-2xl { background-color: #1e293b !important; border-color: #334155 !important; }
+        .dark .stat-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.8); }
+
+        /* Text colors */
+        .dark .text-gray-900 { color: #f1f5f9 !important; }
+        .dark .text-gray-800 { color: #e2e8f0 !important; }
+        .dark .text-gray-700 { color: #cbd5e1 !important; }
+        .dark .text-gray-600 { color: #94a3b8 !important; }
+        .dark .text-gray-500 { color: #64748b !important; }
+        .dark .text-gray-400 { color: #64748b !important; }
+        .dark .text-gray-300 { color: #475569 !important; }
+
+        /* Borders */
+        .dark .border-gray-100 { border-color: #334155 !important; }
+        .dark .border-gray-200 { border-color: #334155 !important; }
+        .dark .divide-gray-50 > * + * { border-color: #334155 !important; }
+
+        /* Backgrounds */
+        .dark .bg-gray-50\/50 { background-color: rgba(30, 41, 59, 0.5) !important; }
+        .dark .bg-gray-100 { background-color: #334155 !important; }
+        .dark .bg-gray-200 { background-color: #475569 !important; }
+
+        /* Soft color backgrounds in dark mode */
+        .dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.12) !important; }
+        .dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.12) !important; }
+        .dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.12) !important; }
+        .dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.12) !important; }
+        .dark .bg-blue-100 { background-color: rgba(59, 130, 246, 0.18) !important; }
+        .dark .bg-blue-50\/30 { background-color: rgba(59, 130, 246, 0.06) !important; }
+
+        /* Forms & inputs */
+        .dark input[type="text"],
+        .dark input[type="email"],
+        .dark input[type="password"],
+        .dark input[type="number"],
+        .dark input[type="search"],
+        .dark textarea,
+        .dark select { background-color: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+        .dark input::placeholder,
+        .dark textarea::placeholder { color: #475569 !important; }
+        .dark input:focus, .dark textarea:focus, .dark select:focus { border-color: #3b82f6 !important; }
+
+        /* Modals */
+        .dark .bg-black\/40 { background-color: rgba(0, 0, 0, 0.6) !important; }
+        .dark .relative.bg-white.rounded-2xl { background-color: #1e293b !important; }
+        .dark .sticky.top-0.bg-white { background-color: #1e293b !important; }
+
+        /* Tables */
+        .dark table thead tr { background-color: #0f172a !important; }
+        .dark .schedule-table th { background-color: #334155; }
+        .dark .schedule-table th, .dark .schedule-table td { border-color: #334155; }
+        .dark .notice-board, .dark .sign-board, .dark .schedule { background-color: rgba(251, 191, 36, 0.08); border-color: #78350f; }
+
+        /* Vocab */
+        .dark .vocab-item { background-color: #0f172a; border-color: #334155; }
+
+        /* Hover states */
+        .dark .hover\:bg-gray-50:hover { background-color: #334155 !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+        .dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.12) !important; }
+        .dark .hover\:bg-blue-50:hover { background-color: rgba(59, 130, 246, 0.12) !important; }
+        .dark tr.hover\:bg-gray-50\/50:hover { background-color: rgba(30, 41, 59, 0.5) !important; }
+
+        /* Drop zones */
+        .dark .border-dashed { border-color: #334155 !important; }
+        .dark .border-dashed:hover { border-color: #3b82f6 !important; }
+
+        /* Bulk action bar */
+        .dark .bg-blue-50.border-blue-200 { background-color: rgba(59, 130, 246, 0.12) !important; border-color: rgba(59, 130, 246, 0.25) !important; }
+
+        /* Footer */
+        .dark footer { background-color: #1e293b !important; border-color: #334155 !important; }
+
+        /* Scrollbar */
+        .dark ::-webkit-scrollbar-track { background: #1e293b; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Toasts in dark mode */
+        .dark .toast.bg-green-50 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: #065f46 !important; color: #6ee7b7 !important; }
+        .dark .toast.bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: #7f1d1d !important; color: #fca5a5 !important; }
+        .dark .toast.bg-blue-50 { background-color: rgba(59, 130, 246, 0.15) !important; border-color: #1e3a5f !important; color: #93c5fd !important; }
+        .dark .toast.bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; border-color: #78350f !important; color: #fcd34d !important; }
+
+        /* Export dropdown */
+        .dark .export-dropdown { background-color: #1e293b !important; border-color: #334155 !important; }
+
+        /* Pagination */
+        .dark nav .border-gray-200 { border-color: #334155 !important; }
+
+        /* Dark mode toggle transition */
+        .dark-toggle { transition: transform 0.3s ease, background 0.3s ease; }
     </style>
 </head>
 <body class="h-full bg-gray-50">
@@ -154,6 +275,13 @@ $flash = getFlash();
                     <span class="text-orange-500">🔥</span>
                     <span class="text-xs font-semibold text-orange-600"><?= getUserStreak($currentUser['id']) ?> day streak</span>
                 </div>
+                <!-- Dark Mode Toggle -->
+                <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="dark-toggle p-2 rounded-lg hover:bg-gray-100 transition" title="Toggle Dark Mode">
+                    <!-- Sun icon (shown in dark mode) -->
+                    <svg class="w-5 h-5 text-amber-400 hidden" id="dark-mode-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <!-- Moon icon (shown in light mode) -->
+                    <svg class="w-5 h-5 text-gray-500" id="dark-mode-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
                 <!-- Notifications -->
                 <button class="relative p-2 rounded-lg hover:bg-gray-100 transition">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>

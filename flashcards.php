@@ -330,7 +330,7 @@ require_once __DIR__ . '/includes/header.php';
             <div id="import-step-1">
                 <div class="mb-4">
                     <p class="text-sm text-gray-600 mb-1">Upload an Excel (.xlsx) or CSV (.csv) file with your flashcards.</p>
-                    <p class="text-xs text-gray-400">Expected columns: <strong>Term</strong>, <strong>Definition</strong>, <strong>Image</strong> (optional)</p>
+                    <p class="text-xs text-gray-400">Expected columns: <strong>Term</strong>, <strong>Definition</strong>, <strong>Folder</strong> (optional), <strong>Image</strong> (optional)</p>
                 </div>
                 <div id="fc-import-drop" class="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition" onclick="document.getElementById('fc-import-file').click()">
                     <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -351,6 +351,15 @@ require_once __DIR__ . '/includes/header.php';
                     <div class="flex items-center gap-3">
                         <label class="text-sm font-medium text-gray-700 w-24">Definition <span class="text-red-400">*</span></label>
                         <select id="import-map-definition" class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-medium text-gray-700 w-24">Folder
+                            <svg class="w-3.5 h-3.5 inline text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        </label>
+                        <div class="flex-1">
+                            <select id="import-map-folder" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Cards will be auto-assigned to folders. New folders are created if needed.</p>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3">
                         <label class="text-sm font-medium text-gray-700 w-24">Image</label>
@@ -392,6 +401,7 @@ require_once __DIR__ . '/includes/header.php';
                                 <th class="px-3 py-2 text-xs font-semibold text-gray-500 w-10">#</th>
                                 <th class="px-3 py-2 text-xs font-semibold text-gray-500">Term</th>
                                 <th class="px-3 py-2 text-xs font-semibold text-gray-500">Definition</th>
+                                <th class="px-3 py-2 text-xs font-semibold text-gray-500 w-28">Folder</th>
                                 <th class="px-3 py-2 text-xs font-semibold text-gray-500 w-24">Image</th>
                             </tr>
                         </thead>
