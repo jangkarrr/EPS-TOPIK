@@ -89,6 +89,18 @@ require_once __DIR__ . '/includes/header.php';
 
         <!-- Filters & Controls -->
         <div class="flex items-center gap-2 flex-wrap">
+            <!-- Folder Filter -->
+            <select id="fc-folder-filter" class="px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                <option value="">All Folders</option>
+                <option value="null">Unsorted</option>
+            </select>
+
+            <!-- Folders Management Button -->
+            <button onclick="FolderManager.openModal()" class="px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition flex items-center gap-1.5" title="Manage Folders">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                Folders
+            </button>
+
             <!-- Status Filter -->
             <select id="fc-status-filter" class="px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                 <option value="">All Status</option>
@@ -145,7 +157,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <!-- Study Button -->
-            <a href="<?= APP_URL ?>/flashcard-study.php" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition flex items-center gap-1.5 shadow-sm">
+            <a id="fc-study-btn" href="<?= APP_URL ?>/flashcard-study.php" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition flex items-center gap-1.5 shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span class="hidden sm:inline">Study</span>
             </a>
@@ -215,6 +227,14 @@ require_once __DIR__ . '/includes/header.php';
                 <textarea id="fc-definition" name="definition" required rows="3" placeholder="e.g., Hello (formal greeting)" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
             </div>
 
+            <!-- Folder Selection -->
+            <div>
+                <label for="fc-folder" class="block text-sm font-medium text-gray-700 mb-1.5">Folder</label>
+                <select id="fc-folder" name="deck_id" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    <option value="">-- No Folder (Unsorted) --</option>
+                </select>
+            </div>
+
             <!-- Image Upload -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Image <span class="text-gray-400 font-normal">(optional)</span></label>
@@ -241,6 +261,54 @@ require_once __DIR__ . '/includes/header.php';
                 Save
             </button>
         </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOLDERS (DECKS) MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="fc-folders-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeModal('fc-folders-modal')"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Manage Folders</h3>
+            <button onclick="closeModal('fc-folders-modal')" class="p-1 rounded-lg hover:bg-gray-100 transition">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- Folders List -->
+            <div>
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Folders</h4>
+                <div id="folders-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Create/Edit Folder Form -->
+            <div class="border-t border-gray-100 pt-4">
+                <h4 id="folder-form-title" class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Create New Folder</h4>
+                <form id="folder-form" class="space-y-3" onsubmit="event.preventDefault(); FolderManager.saveFolder();">
+                    <input type="hidden" id="folder-id" value="">
+                    <div>
+                        <label for="folder-name" class="block text-xs font-medium text-gray-500 mb-1">Folder Name <span class="text-red-400">*</span></label>
+                        <input type="text" id="folder-name" required placeholder="e.g. Vocabulary Set 1" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="folder-color" class="block text-xs font-medium text-gray-500 mb-1">Theme Color</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="folder-color" value="#3B82F6" class="w-8 h-8 rounded border border-gray-200 cursor-pointer p-0">
+                            <span class="text-xs text-gray-400">Choose a color highlight</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" id="folder-cancel-btn" onclick="FolderManager.resetForm()" class="hidden px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition">Cancel Edit</button>
+                        <button type="submit" id="folder-save-btn" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition">Save Folder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 

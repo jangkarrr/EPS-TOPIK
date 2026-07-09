@@ -37,6 +37,16 @@ try {
             $where = "f.user_id = ?";
             $params = [$userId];
 
+            $deckId = $_GET['deck_id'] ?? '';
+            if ($deckId !== '') {
+                if ($deckId === 'null') {
+                    $where .= " AND f.deck_id IS NULL";
+                } else {
+                    $where .= " AND f.deck_id = ?";
+                    $params[] = (int)$deckId;
+                }
+            }
+
             if ($search) {
                 $where .= " AND (f.term LIKE ? OR f.definition LIKE ?)";
                 $params[] = "%$search%";
@@ -61,7 +71,12 @@ try {
                 default => 'f.created_at DESC',
             };
 
-            $stmt = $db->prepare("SELECT f.* FROM flashcards f WHERE $where ORDER BY $orderBy LIMIT $perPage OFFSET $offset");
+            $stmt = $db->prepare("SELECT f.*, fd.name as deck_name, fd.color as deck_color 
+                FROM flashcards f 
+                LEFT JOIN flashcard_decks fd ON fd.id = f.deck_id 
+                WHERE $where 
+                ORDER BY $orderBy 
+                LIMIT $perPage OFFSET $offset");
             $stmt->execute($params);
             $cards = $stmt->fetchAll();
 
@@ -134,8 +149,17 @@ try {
                 );
             }
 
-            $stmt = $db->prepare("INSERT INTO flashcards (user_id, term, definition, image_path) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$userId, $term, $definition, $imagePath]);
+            $deckId = isset($_POST['deck_id']) && $_POST['deck_id'] !== '' ? (int)$_POST['deck_id'] : null;
+            if ($deckId) {
+                $check = $db->prepare("SELECT id FROM flashcard_decks WHERE id = ? AND user_id = ?");
+                $check->execute([$deckId, $userId]);
+                if (!$check->fetch()) {
+                    $deckId = null;
+                }
+            }
+
+            $stmt = $db->prepare("INSERT INTO flashcards (user_id, deck_id, term, definition, image_path) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$userId, $deckId, $term, $definition, $imagePath]);
             $newId = $db->lastInsertId();
 
             // Auto-create default deck if none exists
@@ -214,8 +238,17 @@ try {
                 );
             }
 
-            $stmt = $db->prepare("UPDATE flashcards SET term = ?, definition = ?, image_path = ?, updated_at = NOW() WHERE id = ? AND user_id = ?");
-            $stmt->execute([$term, $definition, $imagePath, $id, $userId]);
+            $deckId = isset($_POST['deck_id']) && $_POST['deck_id'] !== '' ? (int)$_POST['deck_id'] : null;
+            if ($deckId) {
+                $check = $db->prepare("SELECT id FROM flashcard_decks WHERE id = ? AND user_id = ?");
+                $check->execute([$deckId, $userId]);
+                if (!$check->fetch()) {
+                    $deckId = null;
+                }
+            }
+
+            $stmt = $db->prepare("UPDATE flashcards SET deck_id = ?, term = ?, definition = ?, image_path = ?, updated_at = NOW() WHERE id = ? AND user_id = ?");
+            $stmt->execute([$deckId, $term, $definition, $imagePath, $id, $userId]);
 
             $stmt = $db->prepare("SELECT * FROM flashcards WHERE id = ?");
             $stmt->execute([$id]);
@@ -411,13 +444,25 @@ try {
 
         // ─── STATS ────────────────────────────────────────
         case 'stats':
+            $deckId = $_GET['deck_id'] ?? '';
+            $where = "user_id = ?";
+            $params = [$userId];
+            if ($deckId !== '') {
+                if ($deckId === 'null') {
+                    $where .= " AND deck_id IS NULL";
+                } else {
+                    $where .= " AND deck_id = ?";
+                    $params[] = (int)$deckId;
+                }
+            }
+
             $stmt = $db->prepare("SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
                 SUM(CASE WHEN status = 'known' THEN 1 ELSE 0 END) as known_count,
                 SUM(CASE WHEN status = 'review' THEN 1 ELSE 0 END) as review_count
-                FROM flashcards WHERE user_id = ?");
-            $stmt->execute([$userId]);
+                FROM flashcards WHERE $where");
+            $stmt->execute($params);
             $stats = $stmt->fetch();
 
             echo json_encode(['success' => true, 'stats' => $stats]);
@@ -428,6 +473,16 @@ try {
             $status = $_GET['filter'] ?? '';
             $where = "user_id = ?";
             $params = [$userId];
+
+            $deckId = $_GET['deck_id'] ?? '';
+            if ($deckId !== '') {
+                if ($deckId === 'null') {
+                    $where .= " AND deck_id IS NULL";
+                } else {
+                    $where .= " AND deck_id = ?";
+                    $params[] = (int)$deckId;
+                }
+            }
 
             if ($status && in_array($status, ['new', 'known', 'review'])) {
                 $where .= " AND status = ?";
@@ -445,6 +500,128 @@ try {
             }
 
             echo json_encode(['success' => true, 'cards' => $cards]);
+            break;
+
+        // ─── LIST FOLDERS (DECKS) ─────────────────────────
+        case 'list_folders':
+            $stmt = $db->prepare("SELECT fd.*, COUNT(f.id) as card_count 
+                FROM flashcard_decks fd 
+                LEFT JOIN flashcards f ON f.deck_id = fd.id 
+                WHERE fd.user_id = ? 
+                GROUP BY fd.id 
+                ORDER BY fd.name ASC");
+            $stmt->execute([$userId]);
+            $folders = $stmt->fetchAll();
+
+            echo json_encode(['success' => true, 'folders' => $folders]);
+            break;
+
+        // ─── CREATE FOLDER (DECK) ─────────────────────────
+        case 'create_folder':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+                break;
+            }
+            if (!validateCSRFToken($_POST[CSRF_TOKEN_NAME] ?? '')) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Invalid CSRF token']);
+                break;
+            }
+
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '') ?: null;
+            $color = trim($_POST['color'] ?? '#3B82F6');
+
+            if (!$name) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Folder name is required']);
+                break;
+            }
+
+            $stmt = $db->prepare("INSERT INTO flashcard_decks (user_id, name, description, color) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$userId, $name, $description, $color]);
+            $newId = $db->lastInsertId();
+
+            $stmt = $db->prepare("SELECT * FROM flashcard_decks WHERE id = ?");
+            $stmt->execute([$newId]);
+            $folder = $stmt->fetch();
+
+            echo json_encode(['success' => true, 'folder' => $folder, 'message' => 'Folder created successfully']);
+            break;
+
+        // ─── UPDATE FOLDER (DECK) ─────────────────────────
+        case 'update_folder':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+                break;
+            }
+            if (!validateCSRFToken($_POST[CSRF_TOKEN_NAME] ?? '')) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Invalid CSRF token']);
+                break;
+            }
+
+            $id = (int)($_POST['id'] ?? 0);
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '') ?: null;
+            $color = trim($_POST['color'] ?? '#3B82F6');
+
+            if (!$id || !$name) {
+                http_response_code(422);
+                echo json_encode(['error' => 'ID and Folder name are required']);
+                break;
+            }
+
+            // Verify ownership
+            $stmt = $db->prepare("SELECT id FROM flashcard_decks WHERE id = ? AND user_id = ?");
+            $stmt->execute([$id, $userId]);
+            if (!$stmt->fetch()) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Folder not found']);
+                break;
+            }
+
+            $stmt = $db->prepare("UPDATE flashcard_decks SET name = ?, description = ?, color = ? WHERE id = ? AND user_id = ?");
+            $stmt->execute([$name, $description, $color, $id, $userId]);
+
+            $stmt = $db->prepare("SELECT * FROM flashcard_decks WHERE id = ?");
+            $stmt->execute([$id]);
+            $folder = $stmt->fetch();
+
+            echo json_encode(['success' => true, 'folder' => $folder, 'message' => 'Folder updated successfully']);
+            break;
+
+        // ─── DELETE FOLDER (DECK) ─────────────────────────
+        case 'delete_folder':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+                break;
+            }
+            if (!validateCSRFToken($_POST[CSRF_TOKEN_NAME] ?? '')) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Invalid CSRF token']);
+                break;
+            }
+
+            $id = (int)($_POST['id'] ?? 0);
+
+            // Verify ownership
+            $stmt = $db->prepare("SELECT id FROM flashcard_decks WHERE id = ? AND user_id = ?");
+            $stmt->execute([$id, $userId]);
+            if (!$stmt->fetch()) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Folder not found']);
+                break;
+            }
+
+            // Delete deck (cards will have deck_id set to NULL due to ON DELETE SET NULL constraint)
+            $stmt = $db->prepare("DELETE FROM flashcard_decks WHERE id = ? AND user_id = ?");
+            $stmt->execute([$id, $userId]);
+
+            echo json_encode(['success' => true, 'message' => 'Folder deleted successfully']);
             break;
 
         default:

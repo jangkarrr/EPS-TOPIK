@@ -10,6 +10,17 @@ $userId = getCurrentUserId();
 $csrfToken = generateCSRFToken();
 $csrfName = CSRF_TOKEN_NAME;
 
+$deckId = isset($_GET['deck_id']) && $_GET['deck_id'] !== '' ? $_GET['deck_id'] : '';
+$deckName = 'All Cards';
+if ($deckId !== '' && $deckId !== 'null') {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT name FROM flashcard_decks WHERE id = ? AND user_id = ?");
+    $stmt->execute([(int)$deckId, $userId]);
+    $deckName = $stmt->fetchColumn() ?: 'Folder';
+} elseif ($deckId === 'null') {
+    $deckName = 'Unsorted Cards';
+}
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -271,6 +282,104 @@ require_once __DIR__ . '/includes/header.php';
     cursor: pointer;
     border: none;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   FULLSCREEN MODE STYLES
+   ═══════════════════════════════════════════════════════════ */
+body.in-study-fullscreen {
+    overflow: hidden !important;
+}
+body.in-study-fullscreen #study-container {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    background: #ffffff !important; /* Pure white background */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 2rem !important;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+body.in-study-fullscreen #study-container > div:first-child, /* Top controls */
+body.in-study-fullscreen .study-progress-bar,
+body.in-study-fullscreen #study-prev-btn,
+body.in-study-fullscreen #study-next-btn,
+body.in-study-fullscreen .study-action-btn,
+body.in-study-fullscreen .max-w-md { /* Shortcuts help */
+    display: none !important;
+}
+/* Hide layout components of the site */
+body.in-study-fullscreen header,
+body.in-study-fullscreen footer,
+body.in-study-fullscreen aside,
+body.in-study-fullscreen nav,
+body.in-study-fullscreen .sidebar {
+    display: none !important;
+}
+/* Ensure the wrapping elements of the page do not restrict size */
+body.in-study-fullscreen main,
+body.in-study-fullscreen .container,
+body.in-study-fullscreen .flex-1 {
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+body.in-study-fullscreen #study-container .mb-8 {
+    margin: auto !important;
+    display: flex !important;
+    width: 90vw !important;
+    max-width: 1200px !important;
+    height: 75vh !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+body.in-study-fullscreen .study-card-wrapper {
+    max-width: 90vw !important;
+    width: 90vw !important;
+    height: 75vh !important;
+    max-height: 75vh !important;
+}
+/* Keep card-like appearance with shadows and borders in fullscreen */
+body.in-study-fullscreen .study-card-front,
+body.in-study-fullscreen .study-card-back {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+/* Exit fullscreen button overlay (dark grey for white theme) */
+.exit-fullscreen-btn {
+    display: none;
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 100000;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.exit-fullscreen-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #000000;
+    transform: scale(1.05);
+}
+body.in-study-fullscreen .exit-fullscreen-btn {
+    display: flex !important;
+}
 </style>
 
 <input type="hidden" id="fc-csrf-name" value="<?= $csrfName ?>">
@@ -307,7 +416,7 @@ require_once __DIR__ . '/includes/header.php';
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div>
-                <h2 class="text-lg font-bold text-gray-900">Study Mode</h2>
+                <h2 class="text-lg font-bold text-gray-900">Study Mode (<?= htmlspecialchars($deckName) ?>)</h2>
                 <p class="text-xs text-gray-400" id="study-counter">0 / 0</p>
             </div>
         </div>
@@ -339,6 +448,11 @@ require_once __DIR__ . '/includes/header.php';
                 <input type="range" id="study-text-size" min="1" max="4" step="0.5" value="2" oninput="StudyMode.setTextSize(this.value)">
                 <svg class="w-5 h-5 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><text x="2" y="20" font-size="20" font-weight="bold">A</text></svg>
             </div>
+
+            <!-- Fullscreen Toggle -->
+            <button onclick="StudyMode.toggleFullscreen()" class="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition flex items-center justify-center" title="Fullscreen (F)">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/></svg>
+            </button>
         </div>
     </div>
 
@@ -412,12 +526,18 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="flex items-center gap-2"><span class="shortcut-key">P</span><span class="text-gray-500">Play audio</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">1</span><span class="text-gray-500">Mark as Known</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">2</span><span class="text-gray-500">Mark as Review</span></div>
+                <div class="flex items-center gap-2"><span class="shortcut-key">F</span><span class="text-gray-500">Fullscreen mode</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">+ / −</span><span class="text-gray-500">Text size</span></div>
-                <div class="flex items-center gap-2"><span class="shortcut-key">Esc</span><span class="text-gray-500">Back to list</span></div>
+                <div class="flex items-center gap-2"><span class="shortcut-key">Esc</span><span class="text-gray-500">Exit / Back</span></div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Floating Exit Fullscreen Button -->
+<button type="button" class="exit-fullscreen-btn" onclick="StudyMode.toggleFullscreen()" title="Exit Fullscreen (Esc or F)">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
 
 <!-- Sound FX Helper (Procedural Web Audio API) -->
 <script>
@@ -541,7 +661,12 @@ const StudyMode = {
 
     async loadCards(filter = '') {
         try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const deckId = urlParams.get('deck_id') || '';
             const params = new URLSearchParams({ action: 'study_cards', filter });
+            if (deckId !== '') {
+                params.append('deck_id', deckId);
+            }
             const res = await fetch(`${this.apiUrl}?${params}`);
             const data = await res.json();
 
@@ -619,8 +744,18 @@ const StudyMode = {
                     e.preventDefault();
                     this.markStatus('review');
                     break;
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    this.toggleFullscreen();
+                    break;
                 case 'Escape':
-                    window.location.href = '<?= APP_URL ?>/flashcards.php';
+                    e.preventDefault();
+                    if (document.body.classList.contains('in-study-fullscreen')) {
+                        this.toggleFullscreen();
+                    } else {
+                        window.location.href = '<?= APP_URL ?>/flashcards.php';
+                    }
                     break;
             }
         });
@@ -867,13 +1002,27 @@ const StudyMode = {
     },
 
     applyTextSize() {
+        const isFullscreen = document.body.classList.contains('in-study-fullscreen');
         const size = this.TEXT_SIZES[this.textSizeLevel] || this.TEXT_SIZES[2];
         const isMobile = window.innerWidth < 640;
-        const fontSize = isMobile ? size.mobile : size.card;
+        let fontSize = isMobile ? size.mobile : size.card;
+
+        if (isFullscreen) {
+            // Parse numerical value and unit, then multiply by 2.2 for a giant fullscreen presentation
+            const val = parseFloat(fontSize);
+            const unit = fontSize.replace(/[0-9.]/g, '');
+            fontSize = (val * 2.2) + unit;
+        }
+
         document.querySelectorAll('.study-card-text').forEach(el => {
             el.style.fontSize = fontSize;
         });
     },
+
+    toggleFullscreen() {
+        document.body.classList.toggle('in-study-fullscreen');
+        this.applyTextSize(); // re-evaluate text size based on full size view
+    }
 };
 
 // Init study mode

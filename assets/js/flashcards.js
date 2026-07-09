@@ -20,7 +20,9 @@ const FlashcardManager = {
     init(apiUrl, csrfToken) {
         this.apiUrl = apiUrl;
         this.csrfToken = csrfToken;
+        this.folderFilter = '';
         this.bindEvents();
+        FolderManager.init(this);
         this.loadCards();
         this.loadStats();
     },
@@ -57,6 +59,18 @@ const FlashcardManager = {
                 this.statusFilter = statusSelect.value;
                 this.currentPage = 1;
                 this.loadCards();
+            });
+        }
+
+        // Folder filter
+        const folderSelect = document.getElementById('fc-folder-filter');
+        if (folderSelect) {
+            folderSelect.addEventListener('change', () => {
+                this.folderFilter = folderSelect.value;
+                this.currentPage = 1;
+                this.loadCards();
+                this.loadStats();
+                this.updateStudyButton();
             });
         }
 
@@ -156,6 +170,9 @@ const FlashcardManager = {
             page: this.currentPage,
             per_page: this.perPage,
         });
+        if (this.folderFilter !== '') {
+            params.append('deck_id', this.folderFilter);
+        }
 
         try {
             const res = await fetch(`${this.apiUrl}?${params}`);
@@ -177,7 +194,11 @@ const FlashcardManager = {
     // ─── LOAD STATS ───────────────────────────────────────
     async loadStats() {
         try {
-            const res = await fetch(`${this.apiUrl}?action=stats`);
+            const params = new URLSearchParams({ action: 'stats' });
+            if (this.folderFilter !== '') {
+                params.append('deck_id', this.folderFilter);
+            }
+            const res = await fetch(`${this.apiUrl}?${params}`);
             const data = await res.json();
             if (data.success) {
                 const s = data.stats;
@@ -209,6 +230,9 @@ const FlashcardManager = {
         this.allCards.forEach(card => {
             const checked = this.selectedIds.has(card.id) ? 'checked' : '';
             const statusBadge = this.statusBadgeHTML(card.status);
+            const folderBadge = card.deck_name
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background-color: ${this.escapeAttr(card.deck_color || '#3B82F6')}15; color: ${this.escapeAttr(card.deck_color || '#3B82F6')}">${this.escape(card.deck_name)}</span>`
+                : '';
             const imgHTML = card.image_url
                 ? `<div class="h-32 bg-gray-100 rounded-lg overflow-hidden mb-3"><img src="${this.escapeAttr(card.image_url)}" class="w-full h-full object-cover" alt="" loading="lazy"></div>`
                 : '';
@@ -229,8 +253,11 @@ const FlashcardManager = {
                 <div class="pt-6">
                     ${imgHTML}
                     <div class="flex items-start justify-between gap-2 mb-1">
-                        <h3 class="font-semibold text-gray-900 text-base korean-text leading-tight">${this.escape(card.term)}</h3>
-                        ${statusBadge}
+                        <h3 class="font-semibold text-gray-900 text-base korean-text leading-tight truncate flex-1">${this.escape(card.term)}</h3>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            ${statusBadge}
+                            ${folderBadge}
+                        </div>
                     </div>
                     <p class="text-sm text-gray-500 line-clamp-2">${this.escape(card.definition)}</p>
                     <p class="text-[11px] text-gray-300 mt-2">${this.formatDate(card.created_at)}</p>
@@ -258,6 +285,7 @@ const FlashcardManager = {
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Image</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Term</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Definition</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Folder</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Status</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Date</th>
                             <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Actions</th>
@@ -271,12 +299,17 @@ const FlashcardManager = {
                 ? `<img src="${this.escapeAttr(card.image_url)}" class="w-10 h-10 rounded-lg object-cover" loading="lazy">`
                 : '<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>';
 
+            const folderBadge = card.deck_name
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background-color: ${this.escapeAttr(card.deck_color || '#3B82F6')}15; color: ${this.escapeAttr(card.deck_color || '#3B82F6')}">${this.escape(card.deck_name)}</span>`
+                : '<span class="text-xs text-gray-400">-</span>';
+
             html += `
                 <tr class="hover:bg-gray-50/50 transition">
                     <td class="px-4 py-3"><input type="checkbox" class="fc-checkbox w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" data-id="${card.id}" ${checked} onchange="FlashcardManager.toggleSelect(${card.id})"></td>
                     <td class="px-4 py-3">${thumb}</td>
                     <td class="px-4 py-3"><span class="font-medium text-gray-900 korean-text">${this.escape(card.term)}</span></td>
                     <td class="px-4 py-3"><span class="text-sm text-gray-600 line-clamp-1">${this.escape(card.definition)}</span></td>
+                    <td class="px-4 py-3">${folderBadge}</td>
                     <td class="px-4 py-3">${this.statusBadgeHTML(card.status)}</td>
                     <td class="px-4 py-3"><span class="text-xs text-gray-400">${this.formatDate(card.created_at)}</span></td>
                     <td class="px-4 py-3 text-right">
@@ -397,6 +430,12 @@ const FlashcardManager = {
         document.getElementById('fc-image-preview').classList.add('hidden');
         document.getElementById('fc-image-drop').classList.remove('hidden');
         document.getElementById('fc-remove-image').value = '0';
+
+        const folderSelect = document.getElementById('fc-folder');
+        if (folderSelect) {
+            folderSelect.value = (this.folderFilter && this.folderFilter !== 'null') ? this.folderFilter : '';
+        }
+
         openModal('fc-modal');
         document.getElementById('fc-term').focus();
     },
@@ -416,6 +455,11 @@ const FlashcardManager = {
             document.getElementById('fc-term').value = card.term;
             document.getElementById('fc-definition').value = card.definition;
             document.getElementById('fc-remove-image').value = '0';
+
+            const folderSelect = document.getElementById('fc-folder');
+            if (folderSelect) {
+                folderSelect.value = card.deck_id || '';
+            }
 
             const preview = document.getElementById('fc-image-preview');
             const dropZone = document.getElementById('fc-image-drop');
@@ -441,6 +485,7 @@ const FlashcardManager = {
         const cardId = document.getElementById('fc-card-id').value;
         const imageInput = document.getElementById('fc-image-input');
         const removeImage = document.getElementById('fc-remove-image').value;
+        const deckId = document.getElementById('fc-folder')?.value || '';
 
         if (!term) {
             showToast('Term is required', 'error');
@@ -462,6 +507,7 @@ const FlashcardManager = {
 
         if (cardId) formData.append('id', cardId);
         if (imageInput.files.length) formData.append('image', imageInput.files[0]);
+        formData.append('deck_id', deckId);
 
         // Fix: use proper CSRF token name
         formData.set(document.getElementById('fc-csrf-name').value, this.csrfToken);
@@ -872,4 +918,195 @@ const FlashcardManager = {
             </div>
         </div>`;
     },
+
+    updateStudyButton() {
+        const btn = document.getElementById('fc-study-btn');
+        if (btn) {
+            let href = btn.getAttribute('href').split('?')[0];
+            if (this.folderFilter !== '') {
+                href += `?deck_id=${this.folderFilter}`;
+            }
+            btn.setAttribute('href', href);
+        }
+    }
+};
+
+/**
+ * FolderManager — Folder management logic
+ */
+const FolderManager = {
+    manager: null,
+    folders: [],
+
+    init(manager) {
+        this.manager = manager;
+        this.loadFolders();
+    },
+
+    async loadFolders() {
+        try {
+            const res = await fetch(`${this.manager.apiUrl}?action=list_folders`);
+            const data = await res.json();
+            if (data.success) {
+                this.folders = data.folders;
+                this.populateDropdowns();
+                this.renderFoldersList();
+            }
+        } catch (e) {
+            console.error('Failed to load folders', e);
+        }
+    },
+
+    populateDropdowns() {
+        // 1. Toolbar Filter
+        const filterSelect = document.getElementById('fc-folder-filter');
+        if (filterSelect) {
+            const currentFilter = filterSelect.value;
+            let html = '<option value="">All Folders</option><option value="null">Unsorted</option>';
+            this.folders.forEach(f => {
+                html += `<option value="${f.id}" ${f.id == currentFilter ? 'selected' : ''}>${this.manager.escape(f.name)} (${f.card_count})</option>`;
+            });
+            filterSelect.innerHTML = html;
+        }
+
+        // 2. Add/Edit Form select
+        const formSelect = document.getElementById('fc-folder');
+        if (formSelect) {
+            const currentValue = formSelect.value;
+            let html = '<option value="">-- No Folder (Unsorted) --</option>';
+            this.folders.forEach(f => {
+                html += `<option value="${f.id}" ${f.id == currentValue ? 'selected' : ''}>${this.manager.escape(f.name)}</option>`;
+            });
+            formSelect.innerHTML = html;
+        }
+    },
+
+    renderFoldersList() {
+        const listContainer = document.getElementById('folders-list');
+        if (!listContainer) return;
+
+        if (this.folders.length === 0) {
+            listContainer.innerHTML = '<p class="text-xs text-gray-400 py-3 text-center">No folders created yet.</p>';
+            return;
+        }
+
+        let html = '';
+        this.folders.forEach(f => {
+            html += `
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:shadow-sm transition duration-150">
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                    <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${this.manager.escapeAttr(f.color || '#3B82F6')}"></span>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-semibold text-gray-800 truncate">${this.manager.escape(f.name)}</p>
+                        <p class="text-[11px] text-gray-400">${f.card_count} card(s)</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button onclick="FolderManager.editFolder(${f.id}, '${this.escapeQuote(f.name)}', '${this.escapeQuote(f.color)}')" class="p-1 rounded-md text-blue-600 hover:bg-blue-50 transition" title="Edit Folder">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button onclick="FolderManager.deleteFolder(${f.id})" class="p-1 rounded-md text-red-500 hover:bg-red-50 transition" title="Delete Folder">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </div>`;
+        });
+        listContainer.innerHTML = html;
+    },
+
+    openModal() {
+        this.resetForm();
+        this.loadFolders();
+        openModal('fc-folders-modal');
+    },
+
+    editFolder(id, name, color) {
+        document.getElementById('folder-id').value = id;
+        document.getElementById('folder-name').value = name;
+        document.getElementById('folder-color').value = color || '#3B82F6';
+        document.getElementById('folder-form-title').textContent = 'Edit Folder';
+        document.getElementById('folder-cancel-btn').classList.remove('hidden');
+        document.getElementById('folder-name').focus();
+    },
+
+    resetForm() {
+        document.getElementById('folder-id').value = '';
+        document.getElementById('folder-form').reset();
+        document.getElementById('folder-form-title').textContent = 'Create New Folder';
+        document.getElementById('folder-cancel-btn').classList.add('hidden');
+    },
+
+    async saveFolder() {
+        const id = document.getElementById('folder-id').value;
+        const name = document.getElementById('folder-name').value.trim();
+        const color = document.getElementById('folder-color').value;
+
+        if (!name) {
+            showToast('Folder name is required', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('action', id ? 'update_folder' : 'create_folder');
+        formData.append('name', name);
+        formData.append('color', color);
+        formData.append(document.getElementById('fc-csrf-name').value, this.manager.csrfToken);
+        if (id) formData.append('id', id);
+
+        const btn = document.getElementById('folder-save-btn');
+        btn.disabled = true;
+        const origText = btn.textContent;
+        btn.textContent = 'Saving...';
+
+        try {
+            const res = await fetch(this.manager.apiUrl, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, 'success');
+                this.resetForm();
+                this.loadFolders();
+                this.manager.loadCards(); // Reload cards since counts or filters might be relevant
+            } else {
+                showToast(data.error || 'Failed to save folder', 'error');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
+    },
+
+    async deleteFolder(id) {
+        if (!confirm('Are you sure you want to delete this folder? The cards in it will not be deleted, they will just be unsorted.')) return;
+
+        const formData = new FormData();
+        formData.append('action', 'delete_folder');
+        formData.append('id', id);
+        formData.append(document.getElementById('fc-csrf-name').value, this.manager.csrfToken);
+
+        try {
+            const res = await fetch(this.manager.apiUrl, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, 'success');
+                if (this.manager.folderFilter == id) {
+                    this.manager.folderFilter = '';
+                    const filterSelect = document.getElementById('fc-folder-filter');
+                    if (filterSelect) filterSelect.value = '';
+                    this.manager.updateStudyButton();
+                }
+                this.loadFolders();
+                this.manager.loadCards();
+            } else {
+                showToast(data.error || 'Failed to delete folder', 'error');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
+    },
+
+    escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
 };
