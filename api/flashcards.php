@@ -383,6 +383,28 @@ try {
                     continue;
                 }
 
+                // Handle base64 data URI images (from embedded Excel images)
+                $imagePath = null;
+                if ($image && preg_match('/^data:image\/(png|jpe?g|gif|webp|bmp);base64,(.+)$/i', $image, $matches)) {
+                    $imgExt = strtolower($matches[1]);
+                    if ($imgExt === 'jpeg') $imgExt = 'jpg';
+                    $imgData = base64_decode($matches[2]);
+                    if ($imgData !== false && strlen($imgData) > 0 && strlen($imgData) <= MAX_UPLOAD_SIZE) {
+                        // Ensure upload directory exists
+                        if (!is_dir(FLASHCARD_DIR)) {
+                            mkdir(FLASHCARD_DIR, 0755, true);
+                        }
+                        $imgFilename = uniqid() . '_' . time() . '.' . $imgExt;
+                        $imgFilepath = FLASHCARD_DIR . $imgFilename;
+                        if (file_put_contents($imgFilepath, $imgData) !== false) {
+                            $imagePath = $imgFilename;
+                        }
+                    }
+                } elseif ($image) {
+                    // Regular file path string (legacy behavior)
+                    $imagePath = $image;
+                }
+
                 // Resolve folder/deck_id
                 $deckId = null;
                 if ($folderName !== '') {
@@ -398,7 +420,7 @@ try {
                     }
                 }
 
-                $insertStmt->execute([$userId, $deckId, $term, $definition, $image]);
+                $insertStmt->execute([$userId, $deckId, $term, $definition, $imagePath]);
                 $imported++;
             }
 

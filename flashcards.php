@@ -13,6 +13,8 @@ $csrfName = CSRF_TOKEN_NAME;
 require_once __DIR__ . '/includes/header.php';
 ?>
 
+<!-- JSZip for extracting embedded images from Excel files -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- SheetJS CDN for Excel import/export -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 

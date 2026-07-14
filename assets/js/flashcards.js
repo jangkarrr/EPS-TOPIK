@@ -662,6 +662,8 @@ const FlashcardManager = {
 
                 const headers = json[0].map(h => String(h).trim());
                 const rows = [];
+                // Track original row indices (0-based data row index → excel row)
+                const rowIndexMap = [];
                 for (let i = 1; i < json.length; i++) {
                     if (json[i].some(v => v !== undefined && v !== null && String(v).trim())) {
                         const row = {};
@@ -669,8 +671,32 @@ const FlashcardManager = {
                             row[h] = json[i][idx] !== undefined ? String(json[i][idx]).trim() : '';
                         });
                         rows.push(row);
+                        rowIndexMap.push(i); // Excel row index (0-based, row 0 = header)
                     }
                 }
+
+                // ─── Extract embedded images from the xlsx zip ───
+                const embeddedImages = await this._extractExcelImages(data);
+                // embeddedImages is a Map: excelRowIndex (0-based) => base64 data URI
+
+                // Attach embedded images to rows
+                if (embeddedImages && embeddedImages.size > 0) {
+                    // Ensure headers include an 'Image' column if images were found
+                    if (!headers.some(h => ['image', 'picture', 'photo', 'img'].includes(h.toLowerCase()))) {
+                        headers.push('Image');
+                    }
+                    const imgHeader = headers.find(h => ['image', 'picture', 'photo', 'img'].includes(h.toLowerCase())) || 'Image';
+
+                    rowIndexMap.forEach((excelRow, dataIdx) => {
+                        if (embeddedImages.has(excelRow)) {
+                            // Only set if the row doesn't already have an image path
+                            if (!rows[dataIdx][imgHeader]) {
+                                rows[dataIdx][imgHeader] = embeddedImages.get(excelRow);
+                            }
+                        }
+                    });
+                }
+
                 parsed = { headers, rows };
             } else {
                 showToast('Unsupported file type. Use .csv or .xlsx', 'error');
@@ -680,6 +706,194 @@ const FlashcardManager = {
             this.showImportMapping(parsed);
         } catch (err) {
             showToast('Error reading file: ' + err.message, 'error');
+        }
+    },
+
+    /**
+     * Extract embedded images from an xlsx file's zip structure.
+     * Excel stores images in xl/media/ and their cell anchors in xl/drawings/.
+     * Uses regex-based XML parsing to avoid browser namespace issues with DOMParser.
+     * Returns a Map of excelRowIndex (0-based) => base64 data URI.
+     */
+    async _extractExcelImages(arrayBuffer) {
+        try {
+            const JSZipLib = (typeof JSZip !== 'undefined') ? JSZip : null;
+            if (!JSZipLib) {
+                console.warn('[Flashcard Import] JSZip not available');
+                return new Map();
+            }
+
+            const zip = await JSZipLib.loadAsync(arrayBuffer);
+            const zipEntries = Object.entries(zip.files);
+
+            // Log all zip paths for debugging
+            const allPaths = zipEntries.map(([p]) => p);
+            console.log('[Flashcard Import] All zip paths:', allPaths);
+
+            // ── Step 1: Read all image files from xl/media/ ──
+            const mediaFiles = {};
+            const mediaOrder = []; // Track order for sequential fallback
+            for (const [path, entry] of zipEntries) {
+                if (path.startsWith('xl/media/') && !entry.dir) {
+                    const ext = path.split('.').pop().toLowerCase();
+                    if (ext === 'emf' || ext === 'wmf') continue;
+
+                    const mime = {
+                        png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+                        gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+                        tiff: 'image/tiff', svg: 'image/svg+xml'
+                    }[ext] || 'image/png';
+
+                    const imgBuffer = await entry.async('arraybuffer');
+                    const bytes = new Uint8Array(imgBuffer);
+                    let binary = '';
+                    const chunkSize = 8192;
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, bytes.length)));
+                    }
+
+                    const baseName = path.split('/').pop();
+                    const dataUri = `data:${mime};base64,${btoa(binary)}`;
+                    mediaFiles[baseName] = dataUri;
+                    mediaOrder.push(dataUri);
+                }
+            }
+
+            if (Object.keys(mediaFiles).length === 0) {
+                console.log('[Flashcard Import] No images found in xl/media/');
+                return new Map();
+            }
+            console.log(`[Flashcard Import] Found ${Object.keys(mediaFiles).length} image(s):`, Object.keys(mediaFiles));
+
+            // ── Step 2: Parse ALL relationship files to map rId → media filename ──
+            const rIdToMedia = {};
+            for (const [path, entry] of zipEntries) {
+                // Check any .rels file that might reference images
+                if (path.endsWith('.rels') && path.includes('_rels')) {
+                    const xml = await entry.async('text');
+                    // Only process if it references media/images
+                    if (!xml.includes('media/') && !xml.includes('image')) continue;
+
+                    console.log(`[Flashcard Import] Processing rels file: ${path}`);
+
+                    // Match self-closing and regular tags
+                    const relBlocks = xml.match(/<Relationship\s[^>]*\/?>/gi) || [];
+                    console.log(`[Flashcard Import]   Found ${relBlocks.length} relationship(s) in ${path}`);
+
+                    relBlocks.forEach(block => {
+                        const idMatch = block.match(/Id\s*=\s*"([^"]+)"/i);
+                        const targetMatch = block.match(/Target\s*=\s*"([^"]+)"/i);
+                        if (idMatch && targetMatch && targetMatch[1].includes('media/')) {
+                            const rId = idMatch[1];
+                            const mediaName = targetMatch[1].split('/').pop();
+                            rIdToMedia[rId] = mediaName;
+                            console.log(`[Flashcard Import]   ${rId} → ${mediaName}`);
+                        }
+                    });
+                }
+            }
+            console.log('[Flashcard Import] Relationship map:', JSON.stringify(rIdToMedia));
+
+            // ── Step 3: Parse drawing XML to find image anchors ──
+            const rowImageMap = new Map();
+            let drawingFilesFound = 0;
+            let anchorsFound = 0;
+
+            for (const [path, entry] of zipEntries) {
+                // Match any drawing XML file (not rels)
+                if (path.includes('drawings/') && path.endsWith('.xml') && !path.includes('_rels')) {
+                    drawingFilesFound++;
+                    const xml = await entry.async('text');
+                    console.log(`[Flashcard Import] Processing drawing: ${path} (${xml.length} chars)`);
+                    // Log first 500 chars to see the XML structure
+                    console.log(`[Flashcard Import] Drawing XML preview:`, xml.substring(0, 500));
+
+                    // Try multiple anchor patterns to handle different Excel formats
+                    // Pattern 1: Standard namespace prefix (xdr:twoCellAnchor)
+                    // Pattern 2: No namespace prefix (twoCellAnchor)
+                    // The regex captures everything between anchor open and close tags
+                    const anchorRegex = /<(?:[\w]+:)?(?:twoCellAnchor|oneCellAnchor)(?:\s[^>]*)?>[\s\S]*?<\/(?:[\w]+:)?(?:twoCellAnchor|oneCellAnchor)>/gi;
+                    let anchorMatch;
+                    const anchorBlocks = [];
+
+                    while ((anchorMatch = anchorRegex.exec(xml)) !== null) {
+                        anchorBlocks.push(anchorMatch[0]);
+                    }
+
+                    console.log(`[Flashcard Import] Found ${anchorBlocks.length} anchor block(s) in ${path}`);
+
+                    anchorBlocks.forEach((block, idx) => {
+                        anchorsFound++;
+                        // Extract row from <from> element
+                        const fromMatch = block.match(/<(?:[\w]+:)?from\s*>([\s\S]*?)<\/(?:[\w]+:)?from\s*>/i);
+                        if (!fromMatch) {
+                            console.log(`[Flashcard Import]   Anchor ${idx}: no <from> found`);
+                            return;
+                        }
+
+                        const rowMatch = fromMatch[1].match(/<(?:[\w]+:)?row\s*>\s*(\d+)\s*<\/(?:[\w]+:)?row\s*>/i);
+                        if (!rowMatch) {
+                            console.log(`[Flashcard Import]   Anchor ${idx}: no <row> in <from>`);
+                            return;
+                        }
+                        const row = parseInt(rowMatch[1], 10);
+
+                        // Find blip embed reference — try multiple patterns
+                        let rId = null;
+
+                        // Pattern 1: r:embed="rIdN"
+                        const blipMatch1 = block.match(/<(?:[\w]+:)?blip[^>]+r:embed\s*=\s*"([^"]+)"/i);
+                        if (blipMatch1) rId = blipMatch1[1];
+
+                        // Pattern 2: embed="rIdN" (no namespace prefix)
+                        if (!rId) {
+                            const blipMatch2 = block.match(/<(?:[\w]+:)?blip[^>]+\sembed\s*=\s*"([^"]+)"/i);
+                            if (blipMatch2) rId = blipMatch2[1];
+                        }
+
+                        // Pattern 3: r:link="rIdN" (linked images)
+                        if (!rId) {
+                            const blipMatch3 = block.match(/<(?:[\w]+:)?blip[^>]+r:link\s*=\s*"([^"]+)"/i);
+                            if (blipMatch3) rId = blipMatch3[1];
+                        }
+
+                        if (!rId) {
+                            console.log(`[Flashcard Import]   Anchor ${idx} (row ${row}): no blip rId found`);
+                            // Log the blip-related part for debugging
+                            const blipArea = block.match(/<(?:[\w]+:)?blip[^>]*\/?>/i);
+                            if (blipArea) console.log(`[Flashcard Import]     blip tag: ${blipArea[0]}`);
+                            return;
+                        }
+
+                        const mediaName = rIdToMedia[rId];
+                        console.log(`[Flashcard Import]   Anchor ${idx}: row=${row}, rId=${rId}, media=${mediaName || 'NOT FOUND'}`);
+
+                        if (mediaName && mediaFiles[mediaName]) {
+                            rowImageMap.set(row, mediaFiles[mediaName]);
+                            console.log(`[Flashcard Import] Mapped image "${mediaName}" to Excel row ${row}`);
+                        }
+                    });
+                }
+            }
+
+            console.log(`[Flashcard Import] Drawing files found: ${drawingFilesFound}, Anchors found: ${anchorsFound}`);
+            console.log(`[Flashcard Import] Images mapped via anchors: ${rowImageMap.size}`);
+
+            // ── Fallback: If no anchors matched but we have images, map sequentially ──
+            // This handles the case where images are pasted but the drawing XML is in an unexpected format
+            if (rowImageMap.size === 0 && mediaOrder.length > 0) {
+                console.log(`[Flashcard Import] Anchor mapping failed — using sequential fallback (${mediaOrder.length} images → rows 1,2,3...)`);
+                // Map images to rows 1, 2, 3, ... (0-based: row 0 is header, so data starts at row 1)
+                mediaOrder.forEach((dataUri, idx) => {
+                    rowImageMap.set(idx + 1, dataUri); // row 1 = first data row
+                });
+            }
+
+            console.log(`[Flashcard Import] Final images mapped: ${rowImageMap.size}`);
+            return rowImageMap;
+        } catch (e) {
+            console.error('[Flashcard Import] Image extraction error:', e);
+            return new Map();
         }
     },
 
@@ -775,12 +989,17 @@ const FlashcardManager = {
             const folderBadge = c.folder
                 ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600">${this.escape(c.folder)}</span>`
                 : '<span class="text-gray-300">-</span>';
+            const imgPreview = c.image
+                ? (c.image.startsWith('data:image/')
+                    ? `<img src="${c.image}" class="w-8 h-8 rounded object-cover border border-gray-200" alt="img">`
+                    : `<span class="text-gray-500">${this.escape(c.image.substring(0, 20))}…</span>`)
+                : '<span class="text-gray-300">-</span>';
             previewHTML += `<tr class="border-b border-gray-50">
                 <td class="px-3 py-2 text-xs text-gray-400">${i + 1}</td>
                 <td class="px-3 py-2 text-sm font-medium korean-text">${this.escape(c.term)}</td>
                 <td class="px-3 py-2 text-sm text-gray-600">${this.escape(c.definition)}</td>
                 <td class="px-3 py-2 text-xs">${folderBadge}</td>
-                <td class="px-3 py-2 text-xs text-gray-400">${this.escape(c.image || '-')}</td>
+                <td class="px-3 py-2 text-xs">${imgPreview}</td>
             </tr>`;
         });
         if (valid.length > 10) {
