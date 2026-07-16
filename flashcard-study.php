@@ -513,6 +513,75 @@ body.in-study-fullscreen .exit-fullscreen-btn {
 .dark a.border-gray-200 {
     border-color: #334155 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE SWIPE SUPPORT
+   ═══════════════════════════════════════════════════════════ */
+
+/* Swipe hint overlay — shown briefly when entering fullscreen on mobile */
+.swipe-hint {
+    display: none;
+    position: fixed;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100001;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 0.6rem 1.4rem;
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.swipe-hint.visible {
+    opacity: 1;
+}
+.swipe-hint svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 0.2rem;
+}
+.dark .swipe-hint {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Card swipe transition animation */
+.study-card-wrapper {
+    transition: transform 0.08s ease-out, opacity 0.08s ease-out;
+}
+.study-card-wrapper.swiping {
+    transition: none;
+}
+.study-card-wrapper.swipe-exit-left {
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in;
+    transform: translateX(-120%) rotate(-8deg) !important;
+    opacity: 0 !important;
+}
+.study-card-wrapper.swipe-exit-right {
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in;
+    transform: translateX(120%) rotate(8deg) !important;
+    opacity: 0 !important;
+}
+.study-card-wrapper.swipe-enter {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out;
+    transform: translateX(0) rotate(0deg) !important;
+    opacity: 1 !important;
+}
+
+/* Show swipe hint only on touch devices in fullscreen */
+@media (pointer: coarse) {
+    body.in-study-fullscreen .swipe-hint {
+        display: block;
+    }
+}
 </style>
 
 <input type="hidden" id="fc-csrf-name" value="<?= $csrfName ?>">
@@ -672,6 +741,13 @@ body.in-study-fullscreen .exit-fullscreen-btn {
     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
 </button>
 
+<!-- Swipe Hint (shown in fullscreen on touch devices) -->
+<div class="swipe-hint" id="swipe-hint">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Swipe to navigate · Tap to flip
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</div>
+
 <!-- Sound FX Helper (Procedural Web Audio API) -->
 <script>
 const SoundFX = {
@@ -790,6 +866,7 @@ const StudyMode = {
 
         await this.loadCards();
         this.bindEvents();
+        this.initSwipe();
     },
 
     async loadCards(filter = '') {
@@ -1155,6 +1232,127 @@ const StudyMode = {
     toggleFullscreen() {
         document.body.classList.toggle('in-study-fullscreen');
         this.applyTextSize(); // re-evaluate text size based on full size view
+
+        // Show swipe hint briefly on mobile when entering fullscreen
+        const isFullscreen = document.body.classList.contains('in-study-fullscreen');
+        const hint = document.getElementById('swipe-hint');
+        if (isFullscreen && hint && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
+            setTimeout(() => { hint.classList.add('visible'); }, 300);
+            setTimeout(() => { hint.classList.remove('visible'); }, 3500);
+        } else if (hint) {
+            hint.classList.remove('visible');
+        }
+    },
+
+    // ── Touch Swipe Gesture Support ──────────────────────────
+    initSwipe() {
+        const cardWrapper = document.querySelector('.study-card-wrapper');
+        if (!cardWrapper) return;
+
+        let startX = 0, startY = 0, currentX = 0, currentY = 0;
+        let isSwiping = false;
+        let swipeDirection = null; // 'horizontal' or 'vertical' — locked after threshold
+        const SWIPE_THRESHOLD = 50;  // min px to trigger navigation
+        const LOCK_THRESHOLD = 10;   // px before locking direction
+
+        cardWrapper.addEventListener('touchstart', (e) => {
+            // Only enable swipe when in fullscreen or on small screens
+            if (!document.body.classList.contains('in-study-fullscreen') && window.innerWidth > 640) return;
+
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            currentX = startX;
+            currentY = startY;
+            isSwiping = true;
+            swipeDirection = null;
+            cardWrapper.classList.add('swiping');
+        }, { passive: true });
+
+        cardWrapper.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+
+            const touch = e.touches[0];
+            currentX = touch.clientX;
+            currentY = touch.clientY;
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            // Lock direction after passing threshold
+            if (!swipeDirection) {
+                if (Math.abs(deltaX) > LOCK_THRESHOLD || Math.abs(deltaY) > LOCK_THRESHOLD) {
+                    swipeDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+                }
+            }
+
+            if (swipeDirection === 'horizontal') {
+                e.preventDefault(); // prevent page scroll during horizontal swipe
+                // Clamp visual drag with resistance at edges
+                const resistance = 0.5;
+                const atEdge = (deltaX > 0 && this.currentIndex === 0) ||
+                               (deltaX < 0 && this.currentIndex >= this.cards.length - 1);
+                const visualX = atEdge ? deltaX * 0.25 : deltaX * resistance;
+                const rotation = visualX * 0.03; // subtle tilt
+                const opacity = 1 - Math.min(Math.abs(visualX) / 400, 0.3);
+                cardWrapper.style.transform = `translateX(${visualX}px) rotate(${rotation}deg)`;
+                cardWrapper.style.opacity = opacity;
+            }
+        }, { passive: false });
+
+        const handleTouchEnd = () => {
+            if (!isSwiping) return;
+            isSwiping = false;
+            cardWrapper.classList.remove('swiping');
+
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            if (swipeDirection === 'horizontal' && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+                if (deltaX < 0 && this.currentIndex < this.cards.length - 1) {
+                    // Swipe left → next card
+                    cardWrapper.classList.add('swipe-exit-left');
+                    setTimeout(() => {
+                        this.next();
+                        cardWrapper.classList.remove('swipe-exit-left');
+                        cardWrapper.style.transform = 'translateX(80px)';
+                        cardWrapper.style.opacity = '0';
+                        // Force reflow
+                        void cardWrapper.offsetWidth;
+                        cardWrapper.classList.add('swipe-enter');
+                        cardWrapper.style.transform = '';
+                        cardWrapper.style.opacity = '';
+                        setTimeout(() => cardWrapper.classList.remove('swipe-enter'), 300);
+                    }, 250);
+                    return;
+                } else if (deltaX > 0 && this.currentIndex > 0) {
+                    // Swipe right → prev card
+                    cardWrapper.classList.add('swipe-exit-right');
+                    setTimeout(() => {
+                        this.prev();
+                        cardWrapper.classList.remove('swipe-exit-right');
+                        cardWrapper.style.transform = 'translateX(-80px)';
+                        cardWrapper.style.opacity = '0';
+                        void cardWrapper.offsetWidth;
+                        cardWrapper.classList.add('swipe-enter');
+                        cardWrapper.style.transform = '';
+                        cardWrapper.style.opacity = '';
+                        setTimeout(() => cardWrapper.classList.remove('swipe-enter'), 300);
+                    }, 250);
+                    return;
+                }
+            }
+
+            // Snap back if swipe didn't meet threshold
+            cardWrapper.style.transition = 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out';
+            cardWrapper.style.transform = '';
+            cardWrapper.style.opacity = '';
+            setTimeout(() => {
+                cardWrapper.style.transition = '';
+            }, 300);
+        };
+
+        cardWrapper.addEventListener('touchend', handleTouchEnd, { passive: true });
+        cardWrapper.addEventListener('touchcancel', handleTouchEnd, { passive: true });
     }
 };
 
