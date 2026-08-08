@@ -286,6 +286,9 @@ require_once __DIR__ . '/includes/header.php';
 /* ═══════════════════════════════════════════════════════════
    FULLSCREEN MODE STYLES
    ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   FULLSCREEN MODE STYLES
+   ═══════════════════════════════════════════════════════════ */
 body.in-study-fullscreen {
     overflow: hidden !important;
 }
@@ -293,30 +296,34 @@ body.in-study-fullscreen #study-container {
     position: fixed !important;
     inset: 0 !important;
     z-index: 99999 !important;
-    background: #ffffff !important; /* Pure white background */
+    background: #ffffff !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 2rem !important;
+    padding: 1.5rem !important;
     width: 100vw !important;
     height: 100vh !important;
+    overflow-y: auto !important;
 }
-body.in-study-fullscreen #study-container > div:first-child, /* Top controls */
-body.in-study-fullscreen .study-progress-bar,
-body.in-study-fullscreen #study-prev-btn,
-body.in-study-fullscreen #study-next-btn,
-body.in-study-fullscreen .study-action-btn,
-body.in-study-fullscreen .max-w-md { /* Shortcuts help */
-    display: none !important;
-}
-/* Hide layout components of the site */
+/* Hide site layout elements */
 body.in-study-fullscreen header,
 body.in-study-fullscreen footer,
 body.in-study-fullscreen aside,
 body.in-study-fullscreen nav,
 body.in-study-fullscreen .sidebar {
     display: none !important;
+}
+/* Hide secondary controls in fullscreen */
+body.in-study-fullscreen #study-container > div:first-child, /* Top dropdowns header */
+body.in-study-fullscreen .max-w-md { /* Shortcuts help */
+    display: none !important;
+}
+/* Progress bar positioning in fullscreen */
+body.in-study-fullscreen .study-progress-bar {
+    width: 90vw !important;
+    max-width: 800px !important;
+    margin-bottom: 1.5rem !important;
 }
 /* Ensure the wrapping elements of the page do not restrict size */
 body.in-study-fullscreen main,
@@ -332,20 +339,25 @@ body.in-study-fullscreen .flex-1 {
     box-shadow: none !important;
     border: none !important;
 }
-body.in-study-fullscreen #study-container .mb-8 {
-    margin: auto !important;
+/* Ensure elements with .hidden stay hidden in fullscreen mode */
+body.in-study-fullscreen .hidden {
+    display: none !important;
+}
+
+body.in-study-fullscreen #normal-card-area:not(.hidden) {
+    margin: 0 auto 1.5rem auto !important;
     display: flex !important;
     width: 90vw !important;
-    max-width: 1200px !important;
-    height: 75vh !important;
+    max-width: 1100px !important;
+    height: 65vh !important;
     align-items: center !important;
     justify-content: center !important;
 }
 body.in-study-fullscreen .study-card-wrapper {
     max-width: 90vw !important;
-    width: 90vw !important;
-    height: 75vh !important;
-    max-height: 75vh !important;
+    width: 100 % !important;
+    height: 100% !important;
+    max-height: 65vh !important;
 }
 /* Keep card-like appearance with shadows and borders in fullscreen */
 body.in-study-fullscreen .study-card-front,
@@ -354,28 +366,28 @@ body.in-study-fullscreen .study-card-back {
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
-/* Exit fullscreen button overlay (dark grey for white theme) */
+/* Floating Exit Fullscreen Button */
 .exit-fullscreen-btn {
     display: none;
     position: fixed;
-    top: 1.5rem;
-    right: 1.5rem;
+    top: 1.25rem;
+    right: 1.25rem;
     z-index: 100000;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.07);
+    color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     cursor: pointer;
     transition: all 0.2s;
 }
 .exit-fullscreen-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.15);
     color: #000000;
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 body.in-study-fullscreen .exit-fullscreen-btn {
     display: flex !important;
@@ -582,6 +594,470 @@ body.in-study-fullscreen .exit-fullscreen-btn {
         display: block;
     }
 }
+/* ═══════════════════════════════════════════════════════════
+   MULTIPLE CHOICE MODE STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+#mc-container,
+#mc-completion {
+    padding: 1rem 0;
+}
+
+.mc-container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.mc-question-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    position: relative;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mc-question-label {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.mc-question-text {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+    color: #1e293b;
+}
+
+.mc-question-tts {
+    position: absolute;
+    top: 0.85rem;
+    right: 1.25rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    background: #eff6ff;
+    color: #3b82f6;
+    transition: all 0.2s;
+    z-index: 5;
+}
+
+.mc-question-tts:hover {
+    background: #dbeafe;
+}
+
+.mc-question-tts.tts-active {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+.mc-choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 500px) {
+    .mc-choices-grid {
+        grid-template-columns: 1fr;
+    }
+    .mc-question-text {
+        font-size: 1.5rem;
+    }
+}
+
+.mc-choice-btn {
+    position: relative;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #334155;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 56px;
+    word-break: break-word;
+}
+
+.mc-choice-btn:hover:not(.mc-answered) {
+    border-color: #93c5fd;
+    background: #f0f7ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.mc-choice-btn:active:not(.mc-answered) {
+    transform: translateY(0);
+}
+
+.mc-choice-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.mc-choice-btn:hover:not(.mc-answered) .mc-choice-number {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.mc-choice-btn.mc-correct {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    animation: mc-correct-pulse 0.5s ease;
+}
+
+.mc-choice-btn.mc-correct .mc-choice-number {
+    background: #10b981;
+    color: white;
+}
+
+.mc-choice-btn.mc-incorrect {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    animation: mc-shake 0.4s ease;
+}
+
+.mc-choice-btn.mc-incorrect .mc-choice-number {
+    background: #ef4444;
+    color: white;
+}
+
+.mc-choice-btn.mc-answered {
+    cursor: default;
+    opacity: 0.45;
+}
+
+.mc-choice-btn.mc-correct.mc-answered,
+.mc-choice-btn.mc-incorrect.mc-answered {
+    opacity: 1;
+}
+
+@keyframes mc-correct-pulse {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.03); }
+    60% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+}
+
+@keyframes mc-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+.mc-score-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.mc-score-correct { color: #10b981; font-weight: 700; }
+.mc-score-incorrect { color: #ef4444; font-weight: 700; }
+
+.mc-feedback {
+    text-align: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.mc-feedback.correct {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.mc-feedback.incorrect {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* MC Completion Screen */
+.mc-completion {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 2rem;
+}
+
+.mc-completion-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2.5rem;
+}
+
+.mc-completion-icon.excellent {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+
+.mc-completion-icon.good {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.mc-completion-icon.needs-work {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+}
+
+.mc-completion-score {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+}
+
+.mc-completion-message {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.mc-completion-detail {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+
+.mc-completion-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mc-completion-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.mc-completion-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.mc-completion-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.mc-completion-btn.secondary {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.mc-completion-btn.secondary:hover {
+    background: #e2e8f0;
+}
+
+/* Fullscreen MC */
+body.in-study-fullscreen #mc-container:not(.hidden) {
+    margin: auto !important;
+    width: 90vw !important;
+    max-width: 800px !important;
+}
+
+body.in-study-fullscreen #mc-completion:not(.hidden) {
+    margin: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 90vw !important;
+    max-width: 600px !important;
+}
+
+body.in-study-fullscreen .mc-question-text {
+    font-size: 3rem !important;
+}
+
+body.in-study-fullscreen .mc-choice-btn {
+    font-size: 1.1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 640px) {
+    body.in-study-fullscreen .mc-question-text {
+        font-size: 2rem !important;
+    }
+}
+
+/* Dark Mode - Multiple Choice */
+.dark .mc-question-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .mc-question-label {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.dark .mc-question-text {
+    color: #e2e8f0;
+}
+
+.dark .mc-question-tts {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+
+.dark .mc-question-tts:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+.dark .mc-choice-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+.dark .mc-choice-btn:hover:not(.mc-answered) {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.dark .mc-choice-number {
+    background: #334155;
+    color: #94a3b8;
+}
+
+.dark .mc-choice-btn:hover:not(.mc-answered) .mc-choice-number {
+    background: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.dark .mc-choice-btn.mc-correct {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.dark .mc-choice-btn.mc-correct .mc-choice-number {
+    background: #10b981;
+    color: white;
+}
+
+.dark .mc-choice-btn.mc-incorrect {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.dark .mc-choice-btn.mc-incorrect .mc-choice-number {
+    background: #ef4444;
+    color: white;
+}
+
+.dark .mc-score-bar {
+    color: #94a3b8;
+}
+
+.dark .mc-feedback.correct {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+}
+
+.dark .mc-feedback.incorrect {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}
+
+.dark .mc-completion-message {
+    color: #e2e8f0;
+}
+
+.dark .mc-completion-detail {
+    color: #94a3b8;
+}
+
+.dark .mc-completion-btn.secondary {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.dark .mc-completion-btn.secondary:hover {
+    background: #475569;
+}
+
+.dark .mc-completion-icon.excellent {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+}
+
+.dark .mc-completion-icon.good {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+}
+
+.dark .mc-completion-icon.needs-work {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+}
 </style>
 
 <input type="hidden" id="fc-csrf-name" value="<?= $csrfName ?>">
@@ -638,6 +1114,13 @@ body.in-study-fullscreen .exit-fullscreen-btn {
                 <option value="definition">Show Definition First</option>
             </select>
 
+            <!-- Study Mode -->
+            <select id="study-mode-select" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                <option value="normal">📚 Normal Flashcards</option>
+                <option value="mc_term_def">🔤 MC: Term → Definition</option>
+                <option value="mc_def_term">📖 MC: Definition → Term</option>
+            </select>
+
             <!-- Shuffle -->
             <button id="study-shuffle-btn" onclick="StudyMode.toggleShuffle()" class="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition flex items-center gap-1.5" title="Shuffle">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -664,7 +1147,7 @@ body.in-study-fullscreen .exit-fullscreen-btn {
     </div>
 
     <!-- Card Area -->
-    <div class="flex items-center justify-center gap-4 sm:gap-8 mb-8">
+    <div id="normal-card-area" class="flex items-center justify-center gap-4 sm:gap-8 mb-8">
         <!-- Prev Button -->
         <button id="study-prev-btn" onclick="StudyMode.prev()" class="study-nav-btn flex-shrink-0" title="Previous (←)">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -699,8 +1182,27 @@ body.in-study-fullscreen .exit-fullscreen-btn {
         </button>
     </div>
 
+    <!-- Multiple Choice Container -->
+    <div id="mc-container" class="hidden">
+        <div class="mc-container">
+            <div class="mc-question-card">
+                <span class="mc-question-label" id="mc-question-label">WHAT DOES THIS TERM MEAN?</span>
+                <button type="button" class="mc-question-tts" id="mc-question-tts" onclick="event.stopPropagation(); StudyMode.playMCQuestionAudio()" title="Listen (P)">
+                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0112 5.586v12.828a1 1 0 01-1.707.707L5.586 15z"/></svg>
+                </button>
+                <div class="mc-question-text korean-text" id="mc-question-text"></div>
+            </div>
+
+            <div id="mc-feedback" class="mc-feedback" style="display:none"></div>
+
+            <div class="mc-choices-grid" id="mc-choices-grid"></div>
+
+            <div class="mc-score-bar" id="mc-score-display"></div>
+        </div>
+    </div>
+
     <!-- Status Buttons -->
-    <div class="flex items-center justify-center gap-3 mb-8">
+    <div id="normal-status-buttons" class="flex items-center justify-center gap-3 mb-8">
         <button onclick="StudyMode.markStatus('known')" class="study-action-btn bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Known
@@ -731,6 +1233,30 @@ body.in-study-fullscreen .exit-fullscreen-btn {
                 <div class="flex items-center gap-2"><span class="shortcut-key">F</span><span class="text-gray-500">Fullscreen mode</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">+ / −</span><span class="text-gray-500">Text size</span></div>
                 <div class="flex items-center gap-2"><span class="shortcut-key">Esc</span><span class="text-gray-500">Exit / Back</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multiple Choice Completion -->
+    <div id="mc-completion" class="hidden">
+        <div class="mc-completion">
+            <div class="mc-completion-icon" id="mc-completion-icon">🎉</div>
+            <div class="mc-completion-score" id="mc-completion-score">0%</div>
+            <div class="mc-completion-message" id="mc-completion-message">Great job!</div>
+            <div class="mc-completion-detail" id="mc-completion-detail"></div>
+            <div class="mc-completion-actions">
+                <button class="mc-completion-btn primary" onclick="StudyMode.restartMC()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Try Again
+                </button>
+                <button class="mc-completion-btn secondary" onclick="StudyMode.setStudyMode('normal'); document.getElementById('study-mode-select').value = 'normal';">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Normal Flashcards
+                </button>
+                <a href="<?= APP_URL ?>/flashcards.php" class="mc-completion-btn secondary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Flashcards
+                </a>
             </div>
         </div>
     </div>
@@ -816,6 +1342,19 @@ const SoundFX = {
             this.playTone(freq, 0.04, now + (idx * 0.05), 'sine', 0.04);
         });
     },
+    playCorrect() {
+        this.initCtx();
+        const now = this.ctx.currentTime;
+        this.playTone(523.25, 0.1, now, 'sine', 0.07);
+        this.playTone(659.25, 0.1, now + 0.08, 'sine', 0.07);
+        this.playTone(783.99, 0.25, now + 0.16, 'sine', 0.06);
+    },
+    playIncorrect() {
+        this.initCtx();
+        const now = this.ctx.currentTime;
+        this.playTone(200, 0.15, now, 'sawtooth', 0.04);
+        this.playTone(180, 0.2, now + 0.12, 'sawtooth', 0.03);
+    },
     playTone(freq, duration, time, type = 'sine', volume = 0.08) {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -847,6 +1386,12 @@ const StudyMode = {
     frontSide: 'term', // 'term' or 'definition'
     textSizeLevel: parseFloat(localStorage.getItem('fc_text_size') || '2'),
     ttsPlaying: false,
+    studyMode: 'normal', // 'normal', 'mc_term_def', 'mc_def_term'
+    mcChoices: [],
+    mcCorrectIndex: -1,
+    mcAnswered: false,
+    mcScore: { correct: 0, incorrect: 0, total: 0 },
+    _mcTimer: null,
 
     TEXT_SIZES: {
         1:   { card: '1rem',   mobile: '0.875rem' },
@@ -892,6 +1437,11 @@ const StudyMode = {
                 document.getElementById('study-empty').classList.add('hidden');
                 this.renderCard();
                 this.updateProgress();
+
+                // If in MC mode, restart with new filtered cards
+                if (this.studyMode !== 'normal') {
+                    this.startMC();
+                }
             } else {
                 document.getElementById('study-container').classList.add('hidden');
                 document.getElementById('study-empty').classList.remove('hidden');
@@ -913,18 +1463,20 @@ const StudyMode = {
                 case 'a':
                 case 'A':
                     e.preventDefault();
-                    this.prev();
+                    if (this.studyMode === 'normal') this.prev();
                     break;
                 case 'ArrowRight':
                 case 'd':
                 case 'D':
                     e.preventDefault();
-                    this.next();
+                    if (this.studyMode === 'normal') this.next();
+                    else if (this.mcAnswered) this.nextMCQuestion();
                     break;
                 case ' ':
                 case 'Enter':
                     e.preventDefault();
-                    this.flip();
+                    if (this.studyMode === 'normal') this.flip();
+                    else if (this.mcAnswered) this.nextMCQuestion();
                     break;
                 case 's':
                 case 'S':
@@ -934,7 +1486,8 @@ const StudyMode = {
                 case 'p':
                 case 'P':
                     e.preventDefault();
-                    this.playTermAudio(this.isFlipped ? 'back' : 'front');
+                    if (this.studyMode !== 'normal') this.playMCQuestionAudio();
+                    else this.playTermAudio(this.isFlipped ? 'back' : 'front');
                     break;
                 case '=':
                 case '+':
@@ -948,11 +1501,25 @@ const StudyMode = {
                     break;
                 case '1':
                     e.preventDefault();
-                    this.markStatus('known');
+                    if (this.studyMode !== 'normal') this.handleMCAnswer(0);
+                    else this.markStatus('known');
                     break;
                 case '2':
                     e.preventDefault();
-                    this.markStatus('review');
+                    if (this.studyMode !== 'normal') this.handleMCAnswer(1);
+                    else this.markStatus('review');
+                    break;
+                case '3':
+                    if (this.studyMode !== 'normal') {
+                        e.preventDefault();
+                        this.handleMCAnswer(2);
+                    }
+                    break;
+                case '4':
+                    if (this.studyMode !== 'normal') {
+                        e.preventDefault();
+                        this.handleMCAnswer(3);
+                    }
                     break;
                 case 'f':
                 case 'F':
@@ -981,6 +1548,23 @@ const StudyMode = {
         document.getElementById('study-filter').addEventListener('change', (e) => {
             this.loadCards(e.target.value);
         });
+
+        // Study mode selector
+        document.getElementById('study-mode-select').addEventListener('change', (e) => {
+            this.setStudyMode(e.target.value);
+        });
+
+        // Sync native fullscreen changes
+        const onFullscreenChange = () => {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                document.body.classList.remove('in-study-fullscreen');
+            } else {
+                document.body.classList.add('in-study-fullscreen');
+            }
+            this.applyTextSize();
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
     },
 
     renderCard() {
@@ -1230,11 +1814,28 @@ const StudyMode = {
     },
 
     toggleFullscreen() {
-        document.body.classList.toggle('in-study-fullscreen');
-        this.applyTextSize(); // re-evaluate text size based on full size view
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // Enter fullscreen
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+            document.body.classList.add('in-study-fullscreen');
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            document.body.classList.remove('in-study-fullscreen');
+        }
+        this.applyTextSize();
 
         // Show swipe hint briefly on mobile when entering fullscreen
-        const isFullscreen = document.body.classList.contains('in-study-fullscreen');
+        const isFullscreen = document.body.classList.contains('in-study-fullscreen') || !!document.fullscreenElement;
         const hint = document.getElementById('swipe-hint');
         if (isFullscreen && hint && ('ontouchstart' in window || navigator.maxTouchPoints > 0)) {
             setTimeout(() => { hint.classList.add('visible'); }, 300);
@@ -1353,6 +1954,312 @@ const StudyMode = {
 
         cardWrapper.addEventListener('touchend', handleTouchEnd, { passive: true });
         cardWrapper.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    },
+
+    // ── Multiple Choice Mode Methods ──────────────────────
+    setStudyMode(mode) {
+        if (mode !== 'normal' && this.cards.length < 2) {
+            showToast('Need at least 2 cards for Multiple Choice mode', 'warning');
+            document.getElementById('study-mode-select').value = 'normal';
+            return;
+        }
+
+        this.studyMode = mode;
+        const normalCardArea = document.getElementById('normal-card-area');
+        const normalStatusBtns = document.getElementById('normal-status-buttons');
+        const mcContainer = document.getElementById('mc-container');
+        const mcCompletion = document.getElementById('mc-completion');
+        const frontSideSelect = document.getElementById('study-front-side');
+        const shuffleBtn = document.getElementById('study-shuffle-btn');
+
+        if (mode === 'normal') {
+            normalCardArea.classList.remove('hidden');
+            normalStatusBtns.classList.remove('hidden');
+            mcContainer.classList.add('hidden');
+            mcCompletion.classList.add('hidden');
+            frontSideSelect.style.display = '';
+            shuffleBtn.style.display = '';
+            this.renderCard();
+            this.updateProgress();
+        } else {
+            normalCardArea.classList.add('hidden');
+            normalStatusBtns.classList.add('hidden');
+            mcContainer.classList.remove('hidden');
+            mcCompletion.classList.add('hidden');
+            frontSideSelect.style.display = 'none';
+            shuffleBtn.style.display = 'none';
+            this.startMC();
+        }
+    },
+
+    startMC() {
+        this.mcScore = { correct: 0, incorrect: 0, total: 0 };
+        this.currentIndex = 0;
+        this.mcAnswered = false;
+        if (this._mcTimer) { clearTimeout(this._mcTimer); this._mcTimer = null; }
+
+        // Shuffle cards for variety
+        const shuffled = [...this.cards];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        this.cards = shuffled;
+
+        document.getElementById('mc-container').classList.remove('hidden');
+        document.getElementById('mc-completion').classList.add('hidden');
+        this.renderMCQuestion();
+    },
+
+    generateMCChoices() {
+        const currentCard = this.cards[this.currentIndex];
+        const isTermToDef = this.studyMode === 'mc_term_def';
+        const correctAnswer = isTermToDef ? currentCard.definition : currentCard.term;
+
+        // Collect distinct wrong answers from the same deck
+        const wrongPool = [];
+        const seen = new Set();
+        seen.add(correctAnswer);
+        for (let i = 0; i < this.cards.length; i++) {
+            if (i === this.currentIndex) continue;
+            const answer = isTermToDef ? this.cards[i].definition : this.cards[i].term;
+            if (answer && !seen.has(answer)) {
+                wrongPool.push(answer);
+                seen.add(answer);
+            }
+        }
+
+        // Fisher-Yates shuffle wrong pool
+        for (let i = wrongPool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [wrongPool[i], wrongPool[j]] = [wrongPool[j], wrongPool[i]];
+        }
+
+        // Pick up to 3 wrong answers
+        const numWrong = Math.min(3, wrongPool.length);
+        const choices = [{ text: correctAnswer, isCorrect: true }];
+        for (let i = 0; i < numWrong; i++) {
+            choices.push({ text: wrongPool[i], isCorrect: false });
+        }
+
+        // Shuffle choices so correct isn't always first
+        for (let i = choices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [choices[i], choices[j]] = [choices[j], choices[i]];
+        }
+
+        this.mcChoices = choices;
+        this.mcCorrectIndex = choices.findIndex(c => c.isCorrect);
+    },
+
+    renderMCQuestion() {
+        if (this.cards.length === 0) return;
+
+        this.mcAnswered = false;
+        const card = this.cards[this.currentIndex];
+        const isTermToDef = this.studyMode === 'mc_term_def';
+        const questionText = isTermToDef ? card.term : card.definition;
+        const labelText = isTermToDef ? 'WHAT DOES THIS TERM MEAN?' : 'WHICH TERM MATCHES THIS DEFINITION?';
+
+        document.getElementById('mc-question-text').textContent = questionText;
+        document.getElementById('mc-question-label').textContent = labelText;
+
+        // Korean text styling for question
+        const qtEl = document.getElementById('mc-question-text');
+        if (isTermToDef) {
+            qtEl.classList.add('korean-text');
+        } else {
+            qtEl.classList.remove('korean-text');
+        }
+
+        // Generate choices
+        this.generateMCChoices();
+
+        // Render choice buttons
+        const grid = document.getElementById('mc-choices-grid');
+        grid.innerHTML = '';
+        this.mcChoices.forEach((choice, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'mc-choice-btn';
+            btn.onclick = () => this.handleMCAnswer(idx);
+
+            const choicesAreKorean = !isTermToDef;
+            const textClass = choicesAreKorean ? 'korean-text' : '';
+
+            btn.innerHTML = `
+                <span class="mc-choice-number">${idx + 1}</span>
+                <span class="${textClass}">${this.escapeHtml(choice.text)}</span>
+            `;
+            grid.appendChild(btn);
+        });
+
+        // Hide feedback
+        const feedback = document.getElementById('mc-feedback');
+        feedback.className = 'mc-feedback';
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+
+        // Update progress and score
+        this.updateMCProgress();
+        this.renderMCScore();
+    },
+
+    handleMCAnswer(choiceIndex) {
+        if (this.mcAnswered || choiceIndex >= this.mcChoices.length) return;
+
+        this.mcAnswered = true;
+        this.mcScore.total++;
+
+        const buttons = document.querySelectorAll('#mc-choices-grid .mc-choice-btn');
+        const isCorrect = choiceIndex === this.mcCorrectIndex;
+
+        // Mark all buttons as answered (dimmed)
+        buttons.forEach(btn => btn.classList.add('mc-answered'));
+
+        // Always highlight the correct answer
+        if (buttons[this.mcCorrectIndex]) {
+            buttons[this.mcCorrectIndex].classList.add('mc-correct');
+            buttons[this.mcCorrectIndex].classList.remove('mc-answered');
+        }
+
+        const feedback = document.getElementById('mc-feedback');
+        feedback.style.display = 'block';
+
+        if (isCorrect) {
+            this.mcScore.correct++;
+            try { SoundFX.playCorrect(); } catch(e){}
+            feedback.className = 'mc-feedback correct';
+            feedback.textContent = '✓ Correct!';
+        } else {
+            this.mcScore.incorrect++;
+            if (buttons[choiceIndex]) {
+                buttons[choiceIndex].classList.add('mc-incorrect');
+                buttons[choiceIndex].classList.remove('mc-answered');
+            }
+            try { SoundFX.playIncorrect(); } catch(e){}
+            feedback.className = 'mc-feedback incorrect';
+            feedback.textContent = '✗ Incorrect — see the correct answer highlighted';
+        }
+
+        this.renderMCScore();
+
+        // Auto-advance after delay
+        this._mcTimer = setTimeout(() => this.nextMCQuestion(), 1800);
+    },
+
+    nextMCQuestion() {
+        if (this._mcTimer) {
+            clearTimeout(this._mcTimer);
+            this._mcTimer = null;
+        }
+
+        if (this.currentIndex < this.cards.length - 1) {
+            this.currentIndex++;
+            this.renderMCQuestion();
+        } else {
+            this.showMCCompletion();
+        }
+    },
+
+    updateMCProgress() {
+        const total = this.cards.length;
+        const current = this.currentIndex + 1;
+        const pct = total > 0 ? (current / total) * 100 : 0;
+
+        document.getElementById('study-counter').textContent = `${current} / ${total}`;
+        document.getElementById('study-progress').style.width = `${pct}%`;
+    },
+
+    renderMCScore() {
+        const el = document.getElementById('mc-score-display');
+        if (!el) return;
+        el.innerHTML = `
+            <span>Score: <span class="mc-score-correct">${this.mcScore.correct}</span> correct</span>
+            <span>·</span>
+            <span><span class="mc-score-incorrect">${this.mcScore.incorrect}</span> incorrect</span>
+            <span>·</span>
+            <span>${this.mcScore.total} / ${this.cards.length}</span>
+        `;
+    },
+
+    showMCCompletion() {
+        document.getElementById('mc-container').classList.add('hidden');
+        const comp = document.getElementById('mc-completion');
+        comp.classList.remove('hidden');
+
+        const pct = this.mcScore.total > 0 ? Math.round((this.mcScore.correct / this.mcScore.total) * 100) : 0;
+
+        let emoji, message, iconClass;
+        if (pct >= 90) {
+            emoji = '🎉'; message = 'Excellent!'; iconClass = 'excellent';
+        } else if (pct >= 70) {
+            emoji = '👏'; message = 'Good job!'; iconClass = 'good';
+        } else if (pct >= 50) {
+            emoji = '💪'; message = 'Keep practicing!'; iconClass = 'needs-work';
+        } else {
+            emoji = '📚'; message = 'Keep studying!'; iconClass = 'needs-work';
+        }
+
+        document.getElementById('mc-completion-icon').className = `mc-completion-icon ${iconClass}`;
+        document.getElementById('mc-completion-icon').textContent = emoji;
+        document.getElementById('mc-completion-score').textContent = `${pct}%`;
+        document.getElementById('mc-completion-message').textContent = message;
+        document.getElementById('mc-completion-detail').textContent =
+            `You got ${this.mcScore.correct} out of ${this.mcScore.total} correct`;
+
+        // Set progress to 100%
+        document.getElementById('study-progress').style.width = '100%';
+        document.getElementById('study-counter').textContent = `${this.cards.length} / ${this.cards.length}`;
+    },
+
+    restartMC() {
+        document.getElementById('mc-completion').classList.add('hidden');
+        document.getElementById('mc-container').classList.remove('hidden');
+        this.startMC();
+    },
+
+    playMCQuestionAudio() {
+        if (this.ttsPlaying) {
+            if (typeof KoreanTTS !== 'undefined') KoreanTTS.stop();
+            window.speechSynthesis?.cancel();
+            this.ttsPlaying = false;
+            const btn = document.getElementById('mc-question-tts');
+            if (btn) btn.classList.remove('tts-active');
+            return;
+        }
+
+        if (this.cards.length === 0) return;
+        const card = this.cards[this.currentIndex];
+        const isTermToDef = this.studyMode === 'mc_term_def';
+        const textToSpeak = isTermToDef ? card.term : card.definition;
+        if (!textToSpeak) return;
+
+        const btn = document.getElementById('mc-question-tts');
+        if (btn) btn.classList.add('tts-active');
+        this.ttsPlaying = true;
+
+        const onDone = () => {
+            this.ttsPlaying = false;
+            const b = document.getElementById('mc-question-tts');
+            if (b) b.classList.remove('tts-active');
+        };
+
+        if (typeof KoreanTTS !== 'undefined') {
+            KoreanTTS.speak(textToSpeak, { type: 'browser_tts', onEnd: onDone, onError: onDone });
+        } else if ('speechSynthesis' in window) {
+            const utter = new SpeechSynthesisUtterance(textToSpeak);
+            utter.lang = 'ko-KR';
+            utter.rate = 0.9;
+            utter.onend = onDone;
+            utter.onerror = onDone;
+            window.speechSynthesis.speak(utter);
+        }
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 };
 
