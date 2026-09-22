@@ -51,6 +51,10 @@ require_once __DIR__ . '/includes/header.php';
     transform-style: preserve-3d;
 }
 
+.study-card-inner.no-transition {
+    transition: none !important;
+}
+
 .study-card-inner.flipped {
     transform: rotateY(180deg);
 }
@@ -1207,7 +1211,7 @@ body.in-study-fullscreen .mc-choice-btn {
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div>
-                <h2 class="text-lg font-bold text-gray-900">Study Mode (<?= htmlspecialchars($deckName) ?>)</h2>
+                <h2 id="study-title-heading" class="text-lg font-bold text-gray-900">Study Mode (<?= htmlspecialchars($deckName) ?>)</h2>
                 <p class="text-xs text-gray-400" id="study-counter">0 / 0</p>
             </div>
         </div>
@@ -1632,24 +1636,42 @@ const StudyMode = {
         }
     },
 
+    async switchDeck(targetDeck) {
+        if (!targetDeck) return;
+        this.currentDeckId = targetDeck.id;
+
+        // Update URL bar without triggering page refresh
+        const newUrl = `${this.studyPageUrl}?deck_id=${targetDeck.id}`;
+        window.history.pushState({ deck_id: targetDeck.id }, '', newUrl);
+
+        // Update heading title
+        const heading = document.getElementById('study-title-heading');
+        if (heading) {
+            heading.textContent = `Study Mode (${targetDeck.name})`;
+        }
+
+        const filter = document.getElementById('study-filter')?.value || '';
+        await this.loadCards(filter);
+        this.updateDeckNav();
+    },
+
     goToPrevDeck() {
         if (this.currentDeckIndex <= 0 || this.allDecks.length < 2) return;
         const prevDeck = this.allDecks[this.currentDeckIndex - 1];
-        window.location.href = `${this.studyPageUrl}?deck_id=${prevDeck.id}`;
+        this.switchDeck(prevDeck);
     },
 
     goToNextDeck() {
         if (this.currentDeckIndex >= this.allDecks.length - 1 || this.allDecks.length < 2) return;
         const nextDeck = this.allDecks[this.currentDeckIndex + 1];
-        window.location.href = `${this.studyPageUrl}?deck_id=${nextDeck.id}`;
+        this.switchDeck(nextDeck);
     },
 
     async loadCards(filter = '') {
         try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const deckId = urlParams.get('deck_id') || '';
+            const deckId = this.currentDeckId || '';
             const params = new URLSearchParams({ action: 'study_cards', filter });
-            if (deckId !== '') {
+            if (deckId !== '' && deckId !== 'null') {
                 params.append('deck_id', deckId);
             }
             const res = await fetch(`${this.apiUrl}?${params}`);
@@ -1803,11 +1825,12 @@ const StudyMode = {
         const card = this.cards[this.currentIndex];
         const cardEl = document.getElementById('study-card');
 
-        // Reset flip
-        if (this.isFlipped) {
-            cardEl.classList.remove('flipped');
-            this.isFlipped = false;
-        }
+        // Always reset flip to show front side instantly without animation showing back text
+        cardEl.classList.add('no-transition');
+        cardEl.classList.remove('flipped');
+        this.isFlipped = false;
+        void cardEl.offsetWidth; // Force reflow
+        cardEl.classList.remove('no-transition');
 
         // Determine front/back content based on setting
         const frontText = this.frontSide === 'term' ? card.term : card.definition;
