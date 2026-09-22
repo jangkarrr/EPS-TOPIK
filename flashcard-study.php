@@ -527,6 +527,119 @@ body.in-study-fullscreen .exit-fullscreen-btn {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   DECK NAVIGATION STYLES
+   ═══════════════════════════════════════════════════════════ */
+.deck-nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.deck-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.deck-nav-btn:hover:not(:disabled) {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
+}
+
+.deck-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.deck-nav-current {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+    padding: 0 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+}
+
+.deck-nav-current .deck-nav-position {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* Dark Mode - Deck Navigation */
+.dark .deck-nav-bar {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+}
+
+.dark .deck-nav-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+.dark .deck-nav-btn:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.dark .deck-nav-current {
+    color: #94a3b8;
+}
+
+.dark .deck-nav-current .deck-nav-position {
+    color: #64748b;
+}
+
+/* Fullscreen: show deck nav centered near top */
+body.in-study-fullscreen .deck-nav-bar {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100000;
+    margin: 0;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.dark body.in-study-fullscreen .deck-nav-bar {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════
    MOBILE SWIPE SUPPORT
    ═══════════════════════════════════════════════════════════ */
 
@@ -1146,6 +1259,22 @@ body.in-study-fullscreen .mc-choice-btn {
         <div class="study-progress-fill" id="study-progress" style="width: 0%"></div>
     </div>
 
+    <!-- Deck Navigation Bar -->
+    <div id="deck-nav-bar" class="deck-nav-bar" style="display: none;">
+        <button id="deck-prev-btn" class="deck-nav-btn" onclick="StudyMode.goToPrevDeck()" disabled title="Previous Deck">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Prev Deck
+        </button>
+        <div class="deck-nav-current">
+            <span id="deck-nav-name">—</span>
+            <span id="deck-nav-position" class="deck-nav-position"></span>
+        </div>
+        <button id="deck-next-btn" class="deck-nav-btn" onclick="StudyMode.goToNextDeck()" disabled title="Next Deck">
+            Next Deck
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+
     <!-- Card Area -->
     <div id="normal-card-area" class="flex items-center justify-center gap-4 sm:gap-8 mb-8">
         <!-- Prev Button -->
@@ -1248,6 +1377,10 @@ body.in-study-fullscreen .mc-choice-btn {
                 <button class="mc-completion-btn primary" onclick="StudyMode.restartMC()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Try Again
+                </button>
+                <button id="mc-next-deck-btn" class="mc-completion-btn primary" onclick="StudyMode.goToNextDeck()" style="display:none; background: linear-gradient(135deg, #10b981, #059669);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    Next Deck
                 </button>
                 <button class="mc-completion-btn secondary" onclick="StudyMode.setStudyMode('normal'); document.getElementById('study-mode-select').value = 'normal';">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -1376,6 +1509,7 @@ const SoundFX = {
 <script>
 const StudyMode = {
     apiUrl: '<?= APP_URL ?>/api/flashcards.php',
+    studyPageUrl: '<?= APP_URL ?>/flashcard-study.php',
     csrfToken: '<?= $csrfToken ?>',
     csrfName: '<?= $csrfName ?>',
     cards: [],
@@ -1392,6 +1526,10 @@ const StudyMode = {
     mcAnswered: false,
     mcScore: { correct: 0, incorrect: 0, total: 0 },
     _mcTimer: null,
+    // Deck navigation
+    allDecks: [],
+    currentDeckIndex: -1,
+    currentDeckId: null,
 
     TEXT_SIZES: {
         1:   { card: '1rem',   mobile: '0.875rem' },
@@ -1409,9 +1547,101 @@ const StudyMode = {
         if (slider) slider.value = this.textSizeLevel;
         this.applyTextSize();
 
+        // Get current deck_id from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        this.currentDeckId = urlParams.get('deck_id') || '';
+
         await this.loadCards();
+        await this.loadAllDecks();
         this.bindEvents();
         this.initSwipe();
+    },
+
+    // ── Deck Navigation ──────────────────────────────────
+    async loadAllDecks() {
+        try {
+            const res = await fetch(`${this.apiUrl}?action=list_folders`);
+            const data = await res.json();
+            if (data.success && data.folders) {
+                // Only include decks that have cards (card_count > 0)
+                this.allDecks = data.folders.filter(f => parseInt(f.card_count) > 0);
+                this.updateDeckNav();
+            }
+        } catch (e) {
+            console.error('Failed to load decks for navigation', e);
+        }
+    },
+
+    updateDeckNav() {
+        const navBar = document.getElementById('deck-nav-bar');
+        const prevBtn = document.getElementById('deck-prev-btn');
+        const nextBtn = document.getElementById('deck-next-btn');
+        const nameEl = document.getElementById('deck-nav-name');
+        const posEl = document.getElementById('deck-nav-position');
+        const mcNextBtn = document.getElementById('mc-next-deck-btn');
+
+        // Only show deck nav when studying a specific deck and there are multiple decks
+        if (!this.currentDeckId || this.currentDeckId === '' || this.currentDeckId === 'null' || this.allDecks.length < 2) {
+            if (navBar) navBar.style.display = 'none';
+            if (mcNextBtn) mcNextBtn.style.display = 'none';
+            return;
+        }
+
+        // Find current deck position in alphabetical list
+        this.currentDeckIndex = this.allDecks.findIndex(d => String(d.id) === String(this.currentDeckId));
+
+        if (this.currentDeckIndex === -1) {
+            if (navBar) navBar.style.display = 'none';
+            if (mcNextBtn) mcNextBtn.style.display = 'none';
+            return;
+        }
+
+        // Show the nav bar
+        if (navBar) navBar.style.display = 'flex';
+
+        const currentDeck = this.allDecks[this.currentDeckIndex];
+        const hasPrev = this.currentDeckIndex > 0;
+        const hasNext = this.currentDeckIndex < this.allDecks.length - 1;
+
+        if (nameEl) nameEl.textContent = currentDeck.name;
+        if (posEl) posEl.textContent = `Deck ${this.currentDeckIndex + 1} of ${this.allDecks.length}`;
+
+        if (prevBtn) {
+            prevBtn.disabled = !hasPrev;
+            if (hasPrev) {
+                prevBtn.title = `Previous: ${this.allDecks[this.currentDeckIndex - 1].name}`;
+            }
+        }
+        if (nextBtn) {
+            nextBtn.disabled = !hasNext;
+            if (hasNext) {
+                nextBtn.title = `Next: ${this.allDecks[this.currentDeckIndex + 1].name}`;
+            }
+        }
+
+        // Show/hide Next Deck button on MC completion screen
+        if (mcNextBtn) {
+            mcNextBtn.style.display = hasNext ? 'inline-flex' : 'none';
+            if (hasNext) {
+                mcNextBtn.textContent = '';
+                mcNextBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    Next: ${this.allDecks[this.currentDeckIndex + 1].name}
+                `;
+            }
+        }
+    },
+
+    goToPrevDeck() {
+        if (this.currentDeckIndex <= 0 || this.allDecks.length < 2) return;
+        const prevDeck = this.allDecks[this.currentDeckIndex - 1];
+        window.location.href = `${this.studyPageUrl}?deck_id=${prevDeck.id}`;
+    },
+
+    goToNextDeck() {
+        if (this.currentDeckIndex >= this.allDecks.length - 1 || this.allDecks.length < 2) return;
+        const nextDeck = this.allDecks[this.currentDeckIndex + 1];
+        window.location.href = `${this.studyPageUrl}?deck_id=${nextDeck.id}`;
     },
 
     async loadCards(filter = '') {
