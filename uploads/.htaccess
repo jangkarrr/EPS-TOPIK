@@ -1,5 +1,19 @@
+# Allow images and media files to be served across origins
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# Ensure correct Image MIME Types
+<IfModule mod_mime.c>
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg .jfif
+    AddType image/gif .gif
+    AddType image/webp .webp
+    AddType image/svg+xml .svg
+</IfModule>
+
 # Disable script execution inside uploads directory
-<FilesMatch "\.(php|php3|php4|php5|php7|phar|phtml|pl|py|cgi|sh|bash)$">
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phar|phtml|pl|py|cgi|sh|bash)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -8,6 +22,3 @@
         Deny from all
     </IfModule>
 </FilesMatch>
-
-# Allow media types only
-Options -Indexes -ExecCGI
