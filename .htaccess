@@ -5,26 +5,52 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^$ index.php [L]
 
-# Protect includes directory
+# Deny access to sensitive files
+<FilesMatch "^\.env|^\.git|^\.htaccess|\.sql$|config\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Protect includes, database, and scratch directories
 RewriteRule ^includes/ - [F,L]
 RewriteRule ^database/ - [F,L]
+RewriteRule ^scratch/ - [F,L]
 
-# Protect config
-RewriteRule ^config\.php$ - [F,L]
+# Audio MIME Types for Webhosting & Browsers
+<IfModule mod_mime.c>
+    AddType audio/mpeg .mp3
+    AddType audio/ogg .ogg
+    AddType audio/wav .wav
+    AddType audio/mp4 .m4a
+</IfModule>
 
 # Security headers
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
 # Disable directory listing
-Options -Indexes
+Options -Indexes -MultiViews
 
 # PHP settings
 <IfModule mod_php.c>
     php_value upload_max_filesize 10M
     php_value post_max_size 50M
     php_value max_execution_time 120
+    php_value default_charset "UTF-8"
+</IfModule>
+
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 50M
+    php_value max_execution_time 120
+    php_value default_charset "UTF-8"
 </IfModule>

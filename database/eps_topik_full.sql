@@ -1,5 +1,5 @@
 -- ============================================================
--- EPS Korean Trainer - Complete Database Schema & Seed Data
+-- EPS Korean Trainer - Complete Consolidated Database Export
 -- Compatible with MySQL 5.7+ / 8.0+ / MariaDB 10.2+
 -- Charset: utf8mb4 / Collation: utf8mb4_unicode_ci
 -- ============================================================
@@ -504,7 +504,7 @@ CREATE TABLE `system_settings` (
 -- SEED DATA INSERTIONS
 -- ============================================================
 
--- Default Admin: admin@epstopik.com / pass: admin123
+-- Users & Profiles (Default Admin: admin@epstopik.com / pass: admin123)
 -- Default Learner: learner@epstopik.com / pass: learner123
 INSERT INTO `users` (`id`, `full_name`, `email`, `password`, `role`, `status`) VALUES
 (1, 'System Administrator', 'admin@epstopik.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active'),
@@ -554,7 +554,7 @@ INSERT INTO `categories` (`id`, `name`, `slug`, `description`, `module`, `icon`,
 (27, 'Short Passages', 'short-passages', 'Reading comprehension passages about Korean workplace culture', 'reading', '📰', '#F59E0B', 3),
 (28, 'Graphs & Schedules', 'graphs-schedules', 'Interpreting charts, work shifts, timetables, and invoices', 'reading', '📊', '#8B5CF6', 4);
 
--- Reading Passages
+-- Authentic Korean Reading Passages
 INSERT INTO `reading_passages` (`id`, `category_id`, `title`, `passage_text`, `content_type`, `difficulty`) VALUES
 (1, 25, '공장 안전 수칙', '<div class="notice-board">\n<h3 style="text-align:center; margin-bottom:12px;">⚠️ 안전 수칙</h3>\n<ol>\n<li>작업 시 반드시 안전모와 안전화를 착용하십시오.</li>\n<li>기계를 만지기 전에 반드시 전원을 끄십시오.</li>\n<li>비상구 위치를 미리 확인하십시오.</li>\n<li>위험한 물질은 지정된 장소에 보관하십시오.</li>\n<li>사고가 발생하면 즉시 관리자에게 보고하십시오.</li>\n<li>작업 중에 휴대전화를 사용하지 마십시오.</li>\n</ol>\n</div>', 'notice', 'beginner'),
 (2, 25, '작업장 표지판', '<div class="sign-board" style="text-align:center; padding: 16px;">\n<p style="font-size:1.5em; font-weight:bold;">🚫 음식물 반입 금지</p>\n<p style="margin-top:8px;">작업장 안에 음식이나 음료수를 가지고 들어갈 수 없습니다.</p>\n<p style="margin-top:4px;">음식은 휴게실에서만 드십시오.</p>\n</div>', 'sign', 'beginner'),
@@ -570,13 +570,13 @@ INSERT INTO `reading_questions` (`passage_id`, `question_text`, `choice_a`, `cho
 (3, '수요일에 무엇을 합니까?', '기계 점검', '생산 작업', '안전 교육', '정리 및 보고', 'C', '일정표: 수요일 — 안전 교육 (14:00~16:00)', 1),
 (4, '김민수 씨는 어디에서 일합니까?', '식당', '병원', '자동차 공장', '학교', 'C', '김민수 씨는 자동차 공장에서 일합니다.', 1);
 
--- Listening Questions
+-- Authentic Korean Listening Questions
 INSERT INTO `listening_questions` (`id`, `category_id`, `audio_path`, `dialogue_text`, `question_text`, `choice_a`, `choice_b`, `choice_c`, `choice_d`, `correct_answer`, `explanation`, `difficulty`) VALUES
 (1, 21, 'audio/listening/placeholder.mp3', '남자: 저기요, 비상구가 어디에 있어요?\n여자: 저쪽 복도 끝에 있어요. 초록색 표지판이 보이시죠?\n남자: 아, 네. 감사합니다.', '남자는 무엇을 찾고 있습니까?', '화장실', '식당', '사무실', '비상구', 'D', '남자가 "비상구가 어디에 있어요?"라고 물었습니다.', 'beginner'),
 (2, 21, 'audio/listening/placeholder.mp3', '관리자: 이 구역에서는 안전모를 꼭 쓰세요.\n근로자: 네, 알겠습니다. 안전화도 신어야 해요?\n관리자: 네, 안전모와 안전화 둘 다 착용해야 합니다.', '관리자는 근로자에게 무엇을 하라고 했습니까?', '일찍 퇴근하다', '안전모를 쓰다', '휴식을 취하다', '기계를 청소하다', 'B', '관리자가 "안전모를 꼭 쓰세요"라고 했습니다.', 'beginner'),
 (3, 22, 'audio/listening/placeholder.mp3', '여자: 어서 오세요. 뭐 드시겠어요?\n남자: 김치찌개 하나 주세요.\n여자: 네, 음료수는 뭐로 하시겠어요?\n남자: 물 주세요.', '이 대화는 어디에서 하고 있습니까?', '식당', '병원', '은행', '버스 정류장', 'A', '"뭐 드시겠어요?"는 식당에서 하는 말입니다.', 'beginner');
 
--- Vocabulary
+-- Authentic Vocabulary Seed Data
 INSERT INTO `vocabulary` (`id`, `category_id`, `korean`, `english`, `pronunciation`, `part_of_speech`, `example_sentence_korean`, `example_sentence_english`, `difficulty`, `sort_order`) VALUES
 (1, 1, '안녕하세요', 'Hello / How are you', 'annyeonghaseyo', 'expression', '안녕하세요! 반갑습니다.', 'Hello! Nice to meet you.', 'beginner', 1),
 (2, 1, '감사합니다', 'Thank you', 'gamsahamnida', 'expression', '도와주셔서 감사합니다.', 'Thank you for your help.', 'beginner', 2),

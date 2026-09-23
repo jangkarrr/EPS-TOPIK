@@ -55,44 +55,40 @@ A comprehensive web application for EPS-TOPIK (Employment Permit System - Test o
 - MySQL 5.7+ or MariaDB 10.3+
 - Apache with mod_rewrite enabled
 
-## Installation
+## Quick Start & Webhosting Deployment
 
-### 1. Clone / Copy Files
-Place the project folder in your web server's document root:
-```
-htdocs/EPS-TOPIK/
-```
+For full webhosting deployment details (cPanel, Hostinger, Shared Hosting, VPS), see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
-### 2. Create the Database
-Import the schema file into MySQL:
-```sql
-source Z:/xampp/htdocs/EPS-TOPIK/database/schema.sql;
-```
-Or via phpMyAdmin: Import `database/schema.sql`
-
-### 3. Configure Database Connection
-Edit `config.php` if your database credentials differ from defaults:
-```php
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'eps_topik');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+### 1. Environment Setup (.env)
+Copy `.env.example` to `.env` and set your database connection details and domain:
+```bash
+cp .env.example .env
 ```
 
-### 4. Set Permissions
-Ensure the `uploads/` directory is writable:
-```
-uploads/
-├── audio/
-│   ├── listening/
-│   └── exam/
-└── profiles/
+```env
+APP_ENV=production
+APP_NAME="EPS Korean Trainer"
+APP_URL=auto
+
+DB_HOST=localhost
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASS=your_database_password
 ```
 
-### 5. Access the Application
-- **App URL:** http://localhost/EPS-TOPIK
-- **Admin login:** `admin@epstrainer.com` / `password`
-- **Sample learner:** `juan@example.com` / `password`
+### 2. Database Import
+Import the consolidated database SQL file into MySQL / phpMyAdmin:
+- Primary Export: `database/eps_topik_full.sql` (or `database/schema.sql`)
+
+### 3. Server Health Check
+Verify your server environment by opening:
+```
+https://yourdomain.com/health.php
+```
+
+### 4. Default Login Credentials
+- **Admin Account:** `admin@epstopik.com` / `admin123`
+- **Learner Account:** `learner@epstopik.com` / `learner123`
 
 ## Project Structure
 
